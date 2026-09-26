@@ -95,7 +95,7 @@ def test_camera_graceful_degradation_in_alert_pipeline(monkeypatch):
         from device_guardian.camera.capture import CameraError
         raise CameraError("Camera device not detected or access denied.")
 
-    monkeypatch.setattr(capture, "capture_photo", mock_capture)
+    monkeypatch.setattr("device_guardian.alerts.pipeline.capture_photo", mock_capture)
 
     result = trigger_alert(reason="Test Camera Failure", config=cfg)
     assert result.camera_success is False
@@ -106,19 +106,20 @@ def test_camera_graceful_degradation_in_alert_pipeline(monkeypatch):
 
 
 def test_geolocation_offline_graceful_degradation(monkeypatch):
-    """Verify geolocation returns UNKNOWN without raising exceptions when offline or timing out."""
-    import urllib.request
-    import urllib.error
+    """Verify geolocation returns LocationInfo(is_available=False) without raising exceptions when offline."""
+    import requests
+    from device_guardian.location.geolocation import LocationInfo
 
-    def mock_urlopen(*args, **kwargs):
-        raise urllib.error.URLError("Network is unreachable")
+    def mock_get(*args, **kwargs):
+        raise requests.exceptions.ConnectionError("Network is unreachable")
 
-    monkeypatch.setattr(urllib.request, "urlopen", mock_urlopen)
+    monkeypatch.setattr("device_guardian.location.geolocation.requests.get", mock_get)
 
-    loc = get_approximate_location(url="http://invalid.local", timeout=1.0)
-    assert loc is not None
-    assert loc.city == "UNKNOWN"
-    assert loc.country == "UNKNOWN"
+    loc = get_approximate_location(api_url="http://invalid.local", timeout=1.0)
+    assert isinstance(loc, LocationInfo)
+    assert loc.is_available is False
+    assert loc.city == "Unavailable"
+    assert loc.country == "Unavailable"
     assert loc.latitude is None
     assert loc.longitude is None
 

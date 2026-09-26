@@ -69,8 +69,8 @@ def mask_chat_id(chat_id: Optional[str | SecretValue]) -> str:
 class AppConfig:
     """Device Guardian application configuration settings."""
 
-    telegram_bot_token: str | SecretValue
-    telegram_chat_id: str | SecretValue
+    telegram_bot_token: str | SecretValue = ""
+    telegram_chat_id: str | SecretValue = ""
     location_api_url: str = "https://ipapi.co/json/"
     camera_index: int = 0
     request_timeout_seconds: float = 10.0
@@ -203,32 +203,50 @@ class AppConfig:
         errors: list[str] = []
 
         # Validate Telegram Bot Token
-        if not self.telegram_bot_token or not self.telegram_bot_token.strip():
-            errors.append(
-                "TELEGRAM_BOT_TOKEN is missing. Please set it in your .env file."
-            )
-        elif self.telegram_bot_token.strip() in {
-            "your_telegram_bot_token_here",
-            "YOUR_BOT_TOKEN",
-            "CHANGE_ME",
-        }:
-            errors.append(
-                "TELEGRAM_BOT_TOKEN contains placeholder value. Please set a valid Telegram bot token in .env."
-            )
+        if self.telegram_alert_enabled:
+            if not self.telegram_bot_token or not self.telegram_bot_token.strip():
+                errors.append(
+                    "TELEGRAM_BOT_TOKEN is missing. Please set it in your .env file."
+                )
+            elif self.telegram_bot_token.strip() in {
+                "your_telegram_bot_token_here",
+                "YOUR_BOT_TOKEN",
+                "CHANGE_ME",
+            }:
+                errors.append(
+                    "TELEGRAM_BOT_TOKEN contains placeholder value. Please set a valid Telegram bot token in .env."
+                )
 
-        # Validate Telegram Chat ID
-        if not self.telegram_chat_id or not self.telegram_chat_id.strip():
-            errors.append(
-                "TELEGRAM_CHAT_ID is missing. Please set it in your .env file."
-            )
-        elif self.telegram_chat_id.strip() in {
-            "your_telegram_chat_id_here",
-            "YOUR_CHAT_ID",
-            "CHANGE_ME",
-        }:
-            errors.append(
-                "TELEGRAM_CHAT_ID contains placeholder value. Please set a valid Telegram chat ID in .env."
-            )
+            # Validate Telegram Chat ID
+            if not self.telegram_chat_id or not self.telegram_chat_id.strip():
+                errors.append(
+                    "TELEGRAM_CHAT_ID is missing. Please set it in your .env file."
+                )
+            elif self.telegram_chat_id.strip() in {
+                "your_telegram_chat_id_here",
+                "YOUR_CHAT_ID",
+                "CHANGE_ME",
+            }:
+                errors.append(
+                    "TELEGRAM_CHAT_ID contains placeholder value. Please set a valid Telegram chat ID in .env."
+                )
+        else:
+            if self.telegram_bot_token and self.telegram_bot_token.strip() in {
+                "your_telegram_bot_token_here",
+                "YOUR_BOT_TOKEN",
+                "CHANGE_ME",
+            }:
+                errors.append(
+                    "TELEGRAM_BOT_TOKEN contains placeholder value. Please set a valid Telegram bot token in .env."
+                )
+            if self.telegram_chat_id and self.telegram_chat_id.strip() in {
+                "your_telegram_chat_id_here",
+                "YOUR_CHAT_ID",
+                "CHANGE_ME",
+            }:
+                errors.append(
+                    "TELEGRAM_CHAT_ID contains placeholder value. Please set a valid Telegram chat ID in .env."
+                )
 
         # Validate Camera Index
         if self.camera_index < 0:

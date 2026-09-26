@@ -24,6 +24,11 @@ class AlertEvent:
     location: LocationInfo = field(default_factory=LocationInfo)
 
     @property
+    def camera_path(self) -> Optional[Path]:
+        """Alias for image_path representing camera capture output."""
+        return self.image_path
+
+    @property
     def formatted_timestamp(self) -> str:
         """Return human-readable timestamp (YYYY-MM-DD HH:MM:SS)."""
         return self.timestamp.strftime("%Y-%m-%d %H:%M:%S")

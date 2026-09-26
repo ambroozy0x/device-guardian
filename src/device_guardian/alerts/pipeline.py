@@ -128,12 +128,14 @@ def trigger_alert(
             error_message=str(exc),
         )
 
-    # Step 2: Initialize Telegram client
-    telegram_client = TelegramClient(
-        bot_token=config.telegram_bot_token,
-        chat_id=config.telegram_chat_id,
-        timeout=config.request_timeout_seconds,
-    )
+    # Step 2: Initialize Telegram client if alerts enabled
+    telegram_client: Optional[TelegramClient] = None
+    if getattr(config, "telegram_alert_enabled", True):
+        telegram_client = TelegramClient(
+            bot_token=config.telegram_bot_token,
+            chat_id=config.telegram_chat_id,
+            timeout=config.request_timeout_seconds,
+        )
 
     # Step 3: Capture webcam photograph
     captured_image_path: Optional[Path] = None
