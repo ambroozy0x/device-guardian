@@ -1,0 +1,43 @@
+# Device Guardian .gitignore
+
+# Environment & Secrets
+.env
+.env.local
+*.env
+
+# Python Bytecode & Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Virtual Environments
+.venv/
+venv/
+ENV/
+env/
+
+# Distribution & Build
+build/
+dist/
+*.egg-info/
+*.spec
+
+# Logs
+*.log
+logs/
+
+# Sensitive / Temporary Captures
+temp_captures/
+*.jpg
+*.jpeg
+*.png
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
