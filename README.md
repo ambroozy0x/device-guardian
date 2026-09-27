@@ -4,6 +4,15 @@
 
 ---
 
+## 📥 Quick Downloads
+
+| Platform | Download Link | Version | Package Size |
+| :--- | :--- | :--- | :--- |
+| **Android** | [📱 **Download Android APK**](https://github.com/ambroozy0x/device-guardian/raw/main/releases/device-guardian-companion.apk) | 1.0.0 | ~11.4 MB |
+| **Windows** | [💻 **Windows Setup & Details**](releases/README.md) | 1.0.0 | Standalone .exe |
+
+---
+
 ## 1. Overview
 
 **Device Guardian** is an open-source, consent-based security and anti-theft tool created for device owners. When security events occur, Device Guardian swiftly captures physical and situational context (such as an approximate location and a single camera photograph) and dispatches an alert to the user's personal Telegram chat.
