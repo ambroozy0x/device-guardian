@@ -16,6 +16,7 @@ from typing import Any, Optional
 
 import requests
 from device_guardian.logger import get_logger
+from device_guardian.version import __version__
 
 logger = get_logger("location")
 
@@ -139,7 +140,7 @@ def get_approximate_location(
 
     # Some APIs require a User-Agent header to prevent 403 blocks
     headers = {
-        "User-Agent": "DeviceGuardian-AlertSystem/0.1.0 (Personal Security Alert Client)"
+        "User-Agent": f"DeviceGuardian-AlertSystem/{__version__} (Personal Security Alert Client)"
     }
 
     try:

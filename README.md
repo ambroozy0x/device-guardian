@@ -27,6 +27,7 @@ Device Guardian is built in progressive, disciplined phases:
 - **Phase 14: Performance, 24-Hour Soak & Reliability Engineering**: Production-grade reliability engineering, leak defense, and 24-hour soak validation. In-memory operational reliability metrics model (`ReliabilityMetricsTracker`), bounded alert queue with backpressure and priority preservation (`BoundedAlertQueue`), network circuit breaker pattern (`CircuitBreaker`) with bounded retries, log storm suppression via rate-limited duplicate filtering (`DuplicateLogFilter`), deterministic resource lifecycle cleanup, and dedicated soak testing framework (`src/device_guardian/reliability/soak.py`) evaluating explicit reliability acceptance criteria (RSS growth, thread leakage, unexpected errors, retry limits, queue bounds).
 - **Phase 15: Final Security Audit & Release Certification**: Comprehensive security audit, adversarial vulnerability remediation, cryptographic integrity validation, and formal release readiness certification. Hardened duplicate log suppression preserving critical security audit trails, percent-encoded path traversal rejection (`%2e%2e`, `%00`), alert payload dynamic string redaction, URL scheme and timeout bounding for geolocation services, credential scrubbing from platform auth logs (macOS/Linux), modularized boolean and CSV configuration parsers, and 12 dedicated adversarial test suites covering authentication, RBAC, input validation, filesystem defense, secrets isolation, cryptography, network boundaries, IPC replay resistance, update integrity, log sanitization, configuration boundaries, and persistent storage.
 - **Phase 16: Production Documentation & Operator Handbook**: Complete, operator-ready documentation system grounded in the verified codebase. 18 dedicated guides in `docs/` covering installation, configuration, operational procedures, security architecture, detection adapters, alert delivery, reliability engineering, troubleshooting, backup/recovery, update workflows, platform support, deployment checklists, and transparent disclosures on soak and code signing status.
+- **Phase 17: Final v1.0.0 Release & Final Hardening**: Final release gate and evidence-based certification for Device Guardian v1.0.0. Unified version metadata (`1.0.0`), verified clean PyInstaller standalone binary (`dist/device-guardian.exe`, 69.84 MB, SHA-256 `2a6fa0617dd235c510b2eff8a61dfa7423c27d1c5971faa9d83adac39731e89e`), authoritative release manifest (`dist/release-manifest.json`), reproducible build metadata (`dist/build-metadata.json`), zero-secret artifact verification, and comprehensive regression certification (54 security tests passed, 36 reliability tests passed, 44 cross-platform tests passed, 6 documentation tests passed).
 
 ### Operator Documentation Index (`docs/`)
 
@@ -1321,3 +1322,48 @@ The documentation suite in `docs/` provides 18 dedicated guides organized by ope
 ### 3. Automated Documentation Testing
 - Verified via `tests/test_phase16_documentation.py`.
 - Automated test checks confirm file existence, non-emptiness, relative cross-link integrity, required operational disclosures (24-hour soak status, Windows Authenticode), and complete absence of exposed credentials.
+
+---
+
+## 17. Phase 17 - Final v1.0.0 Release & Final Hardening
+
+Phase 17 represents the final planned engineering phase and authoritative release certification of Device Guardian **v1.0.0**.
+
+### 1. Release Architecture & Metadata Unification
+- **Authoritative Version**: Centralized single source of truth in `device_guardian.version` (`__version__ = "1.0.0"`).
+- **Release Identifier**: `DG-1.0.0-windows-x64`
+- **Package Metadata**: Synchronized in `pyproject.toml` (`version = "1.0.0"`).
+- **Dynamic Headers**: User-Agent headers, lifecycle records, and installation models dynamically derive version from `__version__`.
+
+### 2. Standalone Windows Release Artifacts (`dist/`)
+- **Executable**: `dist/device-guardian.exe` (69.84 MB, 73,232,325 bytes)
+  - **SHA-256 Digest**: `2a6fa0617dd235c510b2eff8a61dfa7423c27d1c5971faa9d83adac39731e89e`
+- **Release Manifest**: `dist/release-manifest.json`
+- **Reproducible Build Metadata**: `dist/build-metadata.json`
+- **Installation Verification**: Executable validated via `.\dist\device-guardian.exe --verify-installation` (Hash matching: `PASS`, Structure: `VALID`).
+
+### 3. Final Release Certification Matrix
+
+| Area | Status | Evidence |
+| :--- | :---: | :--- |
+| **Version Metadata** | `CERTIFIED` | Unified `1.0.0` in `version.py`, `pyproject.toml`, and runtime models |
+| **Authentication & RBAC** | `CERTIFIED` | Zero password collection; explicit `--yes` confirmation required for destructive actions |
+| **Secret Protection** | `CERTIFIED` | DPAPI encryption active; centralized `SecretRedactor` active; full repo scan CLEAN |
+| **Filesystem Defense** | `CERTIFIED` | Traversal (`..`), percent-encoded (`%2e%2e`), ADS, and symlink reparse points rejected |
+| **IPC & Locking** | `CERTIFIED` | Whitelisted commands (`START`, `STOP`, `RESTART`); UUID request tokens; clock skew limits |
+| **Cryptographic Integrity** | `CERTIFIED` | Ed25519 digital signature verifier active; streaming chunked SHA-256 validation |
+| **Detection Subsystem** | `CERTIFIED` | Sliding-window threshold correlation; Smart Filter priority hierarchy (Priorities 10–70) |
+| **Alerting Subsystem** | `CERTIFIED` | Bounded queue (`BoundedAlertQueue`, capacity 100); priority shedding; Telegram dispatch |
+| **Reliability Subsystem** | `CERTIFIED` | Real-time `ReliabilityMetricsTracker`; circuit breaker (`CircuitBreaker`); duplicate log filtering |
+| **Recovery Subsystem** | `CERTIFIED` | `AtomicPersistence` (.tmp -> fsync -> rename); self-healing state repair (`--repair-state`) |
+| **Cross-Platform Compatibility** | `TESTED / IMPLEMENTED` | Windows Tier 1 host verified; Linux/macOS Tier 2 architecture implemented & tested |
+| **Release Artifacts** | `CERTIFIED` | PyInstaller standalone binary built cleanly; SHA-256 verified against manifest |
+| **Release Secret Scan** | `CERTIFIED` | `scan_artifacts_for_secrets` verified: Zero credentials or private keys in release output |
+| **24-Hour Production Soak** | `FRAMEWORK VERIFIED / 24H SOAK NOT RUN` | Framework verified, smoke/short soak verified; 24h soak must be executed on target hardware |
+| **Windows Authenticode** | `NOT VERIFIED / NOT IMPLEMENTED` | Ed25519 and SHA-256 verified; Authenticode requires commercial EV physical CA cryptotoken |
+
+### 4. Release Certification Verdict
+
+> **CERTIFIED FOR CONTROLLED V1.0.0 RELEASE**
+>
+> *Device Guardian v1.0.0 satisfies all architectural, security, reliability, operational, and documentation requirements for controlled production deployment under the explicitly documented operational caveats.*

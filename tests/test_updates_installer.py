@@ -16,10 +16,10 @@ def test_install_update_and_rollback(tmp_path: Path):
     target_exe = target_dir / "device-guardian.exe"
     target_exe.write_bytes(b"INITIAL_VERSION_0_1_0_BINARY")
 
-    # Create mock update package for v0.2.0
+    # Create mock update package for v1.1.0
     pkg_dir = tmp_path / "packages"
     pkg_dir.mkdir(parents=True, exist_ok=True)
-    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="0.2.0")
+    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="1.1.0")
 
     # Perform install
     install_res = UpdateInstaller.install_update(
@@ -29,7 +29,7 @@ def test_install_update_and_rollback(tmp_path: Path):
     )
 
     assert install_res.success is True
-    assert install_res.installed_version == "0.2.0"
+    assert install_res.installed_version == "1.1.0"
     assert target_exe.read_bytes() == b"GENUINE_DEVICE_GUARDIAN_NEW_RELEASE_BINARY"
     assert install_res.backup_path is not None
     assert install_res.backup_path.is_file()
@@ -51,7 +51,7 @@ def test_install_update_rejected_package(tmp_path: Path):
     # Package with corrupted hash
     pkg_dir = tmp_path / "packages"
     pkg_dir.mkdir(parents=True, exist_ok=True)
-    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="0.2.0", corrupt_hash=True)
+    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="1.1.0", corrupt_hash=True)
 
     install_res = UpdateInstaller.install_update(
         package_path=zip_pkg,

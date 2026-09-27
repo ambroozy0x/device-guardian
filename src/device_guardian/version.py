@@ -13,7 +13,7 @@ import re
 import sys
 from typing import Optional
 
-__version__ = "0.1.0"
+__version__ = "1.0.0"
 
 _SEMVER_PATTERN = re.compile(
     r"^(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>0|[1-9]\d*)"

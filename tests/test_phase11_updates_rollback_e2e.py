@@ -32,7 +32,7 @@ def test_full_update_lifecycle_e2e(update_env):
 
     pkg_dir = tmp_path / "packages"
     pkg_dir.mkdir(parents=True, exist_ok=True)
-    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="0.2.0")
+    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="1.1.0")
 
     # Install update
     result = UpdateInstaller.install_update(
@@ -42,7 +42,7 @@ def test_full_update_lifecycle_e2e(update_env):
     )
 
     assert result.success is True
-    assert result.installed_version == "0.2.0"
+    assert result.installed_version == "1.1.0"
     assert target_exe.read_bytes() == b"GENUINE_DEVICE_GUARDIAN_NEW_RELEASE_BINARY"
     assert result.backup_path is not None
     assert result.backup_path.is_file()
@@ -59,7 +59,7 @@ def test_update_rollback_restoration_e2e(update_env):
 
     pkg_dir = tmp_path / "packages"
     pkg_dir.mkdir(parents=True, exist_ok=True)
-    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="0.2.0")
+    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="1.1.0")
 
     # Install then rollback
     UpdateInstaller.install_update(
@@ -82,7 +82,7 @@ def test_update_rejection_bad_hash_e2e(update_env):
 
     pkg_dir = tmp_path / "packages"
     pkg_dir.mkdir(parents=True, exist_ok=True)
-    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="0.2.0", corrupt_hash=True)
+    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="1.1.0", corrupt_hash=True)
 
     result = UpdateInstaller.install_update(
         package_path=zip_pkg,
@@ -104,7 +104,7 @@ def test_update_rejection_bad_signature_e2e(update_env):
 
     pkg_dir = tmp_path / "packages"
     pkg_dir.mkdir(parents=True, exist_ok=True)
-    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="0.2.0", corrupt_signature=True)
+    zip_pkg, pub_key = create_mock_update_package(pkg_dir, version="1.1.0", corrupt_signature=True)
 
     result = UpdateInstaller.install_update(
         package_path=zip_pkg,

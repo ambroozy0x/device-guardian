@@ -17,6 +17,7 @@ import uuid
 from device_guardian.logger import get_logger
 from device_guardian.recovery.persistence import AtomicPersistence
 from device_guardian.runtime.paths import ApplicationPaths
+from device_guardian.version import __version__
 
 logger = get_logger("lifecycle.models")
 
@@ -55,7 +56,7 @@ class LifecycleRecord:
     operation_type: LifecycleOperationType = LifecycleOperationType.INSTALL
     state: LifecycleState = LifecycleState.IDLE
     previous_state: LifecycleState = LifecycleState.IDLE
-    version: str = "0.1.0"
+    version: str = field(default_factory=lambda: __version__)
     target_version: Optional[str] = None
     backup_path: Optional[str] = None
     install_path: Optional[str] = None
@@ -132,7 +133,7 @@ class LifecycleRecord:
             operation_type=op_type,
             state=state,
             previous_state=prev_state,
-            version=data.get("version", "0.1.0"),
+            version=data.get("version", __version__),
             target_version=data.get("target_version"),
             backup_path=data.get("backup_path"),
             install_path=data.get("install_path"),
@@ -200,7 +201,7 @@ class InstallationMetadata:
     def from_dict(cls, data: dict[str, Any]) -> InstallationMetadata:
         """Construct InstallationMetadata from dictionary."""
         return cls(
-            version=data.get("version", "0.1.0"),
+            version=data.get("version", __version__),
             install_path=data.get("install_path", ""),
             user_data_path=data.get("user_data_path", ""),
             installed_at=data.get("installed_at", datetime.now(timezone.utc).isoformat()),

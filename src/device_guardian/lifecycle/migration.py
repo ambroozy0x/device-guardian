@@ -24,6 +24,7 @@ from device_guardian.logger import get_logger
 from device_guardian.recovery.persistence import AtomicPersistence
 from device_guardian.runtime.paths import ApplicationPaths
 from device_guardian.security.events import SecurityEventType, log_security_event
+from device_guardian.version import __version__
 
 logger = get_logger("lifecycle.migration")
 
@@ -66,7 +67,7 @@ class MigrationManager:
         existing, recovered, err = AtomicPersistence.safe_read_json(metadata_file)
         if not existing or not isinstance(existing, dict):
             existing = {
-                "version": "0.1.0",
+                "version": __version__,
                 "install_path": str(ApplicationPaths.get_install_root()),
                 "user_data_path": str(data_dir),
                 "installed_at": datetime.now(timezone.utc).isoformat(),

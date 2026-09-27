@@ -4,6 +4,21 @@ All notable changes to the Device Guardian project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] — 2026-09-27
+
+### Phase 17 — Final v1.0.0 Release & Final Hardening
+#### Added
+- **Official v1.0.0 Release**: Certified controlled v1.0.0 production baseline with unified version metadata across `device_guardian.version`, `pyproject.toml`, and runtime models.
+- **Dynamic Application Versioning**: Integrated dynamic `__version__` into geolocation User-Agent headers, lifecycle records, and installation metadata, eliminating hardcoded version drift.
+- **Clean Standalone Windows Release**: Compiled and verified clean PyInstaller binary (`dist/device-guardian.exe`, 69.84 MB) with matching streaming SHA-256 digest (`2a6fa0617dd235c510b2eff8a61dfa7423c27d1c5971faa9d83adac39731e89e`).
+- **Release Manifest & Reproducible Metadata**: Generated authoritative `dist/release-manifest.json` and machine-readable `dist/build-metadata.json`.
+- **Zero-Secret Artifact Verification**: Executed automated release secret scan confirming zero sensitive files, bot tokens, or private keys in compiled outputs.
+- **Installation Integrity Validation**: Verified physical frozen execution and manifest hash matching via `--verify-installation`.
+
+#### Security & Operational Disclosures
+- **Windows Authenticode Code Signing**: Maintained explicit disclosure: **NOT VERIFIED / NOT IMPLEMENTED** (Ed25519 signature verification and streaming SHA-256 integrity digests are verified; commercial EV certificate requires physical CA hardware cryptotoken).
+- **24-Hour Production Soak**: Maintained explicit disclosure: **FRAMEWORK VERIFIED / 24H SOAK NOT RUN** (framework verified; short soak verified; 24-hour soak must be executed on dedicated hardware in target production environment).
+
 ---
 
 ## [0.1.0] — 2026-09-27

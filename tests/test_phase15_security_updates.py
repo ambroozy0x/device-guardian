@@ -77,8 +77,8 @@ def test_release_verification_rejects_tampered_binary(tmp_path: Path) -> None:
     )
     manifest = ReleaseManifest(
         application="Device Guardian",
-        version="0.2.0",
-        release_id="DG-0.2.0-windows-x64",
+        version="1.1.0",
+        release_id="DG-1.1.0-windows-x64",
         release_date="2026-09-27",
         platform="windows",
         architecture="x64",

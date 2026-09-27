@@ -142,7 +142,7 @@ python -m device_guardian.main --platform-info
 
 Expected output:
 ```text
-Device Guardian v0.1.0 (Phase 8: Resilience, Phase 9: Security, Phase 10: Operator UX, Phase 11: Integration, Phase 12: Lifecycle & Phase 13: Cross-Platform)
+Device Guardian v1.0.0 (Phase 8: Resilience, Phase 9: Security, Phase 10: Operator UX, Phase 11: Integration, Phase 12: Lifecycle & Phase 13: Cross-Platform)
 Host Platform: Windows (x64)
 Python: 3.12.6
 Detection Monitor: WindowsSecurityLogMonitor (Ready)

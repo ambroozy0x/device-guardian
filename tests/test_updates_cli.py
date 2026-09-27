@@ -39,7 +39,7 @@ def test_cli_verify_update_valid_package(tmp_path: Path, capsys):
     """Verify --verify-update on authentic package passes and exits 0."""
     from device_guardian.updates.keys import set_trusted_public_key_override
 
-    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="0.2.0")
+    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="1.1.0")
     try:
         set_trusted_public_key_override(pub_key)
         code = main(["--verify-update", str(zip_pkg)])
@@ -52,7 +52,7 @@ def test_cli_verify_update_valid_package(tmp_path: Path, capsys):
 
 def test_cli_install_update_rejected_package(tmp_path: Path, capsys):
     """Verify --install-update on corrupted package is aborted and exits 1."""
-    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="0.2.0", corrupt_hash=True)
+    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="1.1.0", corrupt_hash=True)
     code = main(["--install-update", str(zip_pkg)])
     assert code == 1
     captured = capsys.readouterr()

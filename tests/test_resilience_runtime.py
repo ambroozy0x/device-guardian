@@ -97,6 +97,7 @@ def test_runtime_crash_loop_containment(tmp_path: Path):
         restart_backoff_seconds=0.01,
     )
     det_mgr = DetectionManager(config=cfg, monitor=monitor)
+    det_mgr.poll_once = MagicMock(side_effect=RuntimeError("Simulated monitor failure"))
 
     runtime = GuardianRuntime(
         config=cfg,

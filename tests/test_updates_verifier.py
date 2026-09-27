@@ -12,7 +12,7 @@ from device_guardian.version import __version__, get_version_info
 
 def create_mock_update_package(
     tmp_path: Path,
-    version: str = "0.2.0",
+    version: str = "1.1.0",
     corrupt_hash: bool = False,
     corrupt_signature: bool = False,
     unsigned: bool = False,
@@ -70,20 +70,20 @@ def create_mock_update_package(
 
 def test_verify_update_valid_package(tmp_path: Path):
     """Verify an authentic, signed update package passes all gates."""
-    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="0.2.0")
+    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="1.1.0")
     res = verify_update_package(zip_pkg, public_key=pub_key)
 
     assert res.is_verified is True
     assert res.status == VerificationStatus.VALID
     assert res.manifest is not None
-    assert res.manifest.version == "0.2.0"
+    assert res.manifest.version == "1.1.0"
     assert res.artifact_path is not None
     assert res.artifact_path.is_file()
 
 
 def test_verify_update_unsigned_package(tmp_path: Path):
     """Verify unsigned package is rejected as UNSIGNED."""
-    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="0.2.0", unsigned=True)
+    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="1.1.0", unsigned=True)
     res = verify_update_package(zip_pkg, public_key=pub_key)
 
     assert res.is_verified is False
@@ -95,7 +95,7 @@ def test_verify_update_untrusted_key(tmp_path: Path):
     priv_attacker, _pub_attacker = generate_ed25519_keypair()
     _priv_trusted, pub_trusted = generate_ed25519_keypair()
 
-    zip_pkg, _ = create_mock_update_package(tmp_path, version="0.2.0", signing_key=priv_attacker)
+    zip_pkg, _ = create_mock_update_package(tmp_path, version="1.1.0", signing_key=priv_attacker)
     res = verify_update_package(zip_pkg, public_key=pub_trusted)
 
     assert res.is_verified is False
@@ -104,7 +104,7 @@ def test_verify_update_untrusted_key(tmp_path: Path):
 
 def test_verify_update_corrupted_binary(tmp_path: Path):
     """Verify binary hash mismatch is rejected as CORRUPTED."""
-    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="0.2.0", corrupt_hash=True)
+    zip_pkg, pub_key = create_mock_update_package(tmp_path, version="1.1.0", corrupt_hash=True)
     res = verify_update_package(zip_pkg, public_key=pub_key)
 
     assert res.is_verified is False
