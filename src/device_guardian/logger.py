@@ -10,8 +10,10 @@ import logging
 from logging.handlers import RotatingFileHandler
 import re
 import sys
+import threading
+import time
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 # Common regex patterns to detect and scrub Telegram bot tokens or credentials
 _TELEGRAM_TOKEN_REGEX = re.compile(r"bot\d{6,12}:[A-Za-z0-9_-]{30,}")
@@ -66,6 +68,54 @@ class RedactingFilter(logging.Filter):
             return text
 
 
+class DuplicateLogFilter(logging.Filter):
+    """Filters out repeated identical log records within a rolling time window.
+
+    Prevents log storms when loops or recurring operations emit identical warnings/errors.
+    Maintains a strictly bounded cache to prevent memory growth.
+    """
+
+    def __init__(
+        self,
+        max_repeats: int = 5,
+        window_seconds: float = 10.0,
+        max_cache_size: int = 256,
+    ) -> None:
+        super().__init__()
+        self.max_repeats = max(1, max_repeats)
+        self.window_seconds = max(0.1, window_seconds)
+        self.max_cache_size = max_cache_size
+        self._lock = threading.Lock()
+        # signature -> [count, window_start_time, last_seen_time, suppressed_count]
+        self._cache: dict[tuple[int, str, str], list[Any]] = {}
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        now = time.time()
+        sig = (record.levelno, record.name, str(record.msg))
+
+        with self._lock:
+            # Memory bounded prune if cache reaches limit
+            if len(self._cache) >= self.max_cache_size:
+                cutoff = now - self.window_seconds
+                self._cache = {k: v for k, v in self._cache.items() if v[2] > cutoff}
+                while len(self._cache) >= self.max_cache_size:
+                    oldest_key = min(self._cache.keys(), key=lambda k: self._cache[k][2])
+                    self._cache.pop(oldest_key, None)
+
+            entry = self._cache.get(sig)
+            if entry is None or (now - entry[1]) > self.window_seconds:
+                # Reset window
+                self._cache[sig] = [1, now, now, 0]
+                return True
+
+            entry[0] += 1
+            entry[2] = now
+            if entry[0] > self.max_repeats:
+                entry[3] += 1
+                return False
+            return True
+
+
 _LOGGER_INITIALIZED = False
 
 
@@ -95,12 +145,14 @@ def setup_logging(
             datefmt="%Y-%m-%d %H:%M:%S",
         )
         redacting_filter = RedactingFilter()
+        duplicate_filter = DuplicateLogFilter()
 
         # Console handler
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setLevel(level)
         console_handler.setFormatter(formatter)
         console_handler.addFilter(redacting_filter)
+        console_handler.addFilter(duplicate_filter)
         root_logger.addHandler(console_handler)
 
         # File handler with bounded size rotation (10 MB, 5 backups)
@@ -116,6 +168,7 @@ def setup_logging(
             file_handler.setLevel(level)
             file_handler.setFormatter(formatter)
             file_handler.addFilter(redacting_filter)
+            file_handler.addFilter(duplicate_filter)
             root_logger.addHandler(file_handler)
 
         root_logger.propagate = False

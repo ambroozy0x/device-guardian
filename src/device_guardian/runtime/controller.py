@@ -124,7 +124,11 @@ class GuardianRuntime:
         if self.detection_manager is None:
             self.detection_manager = DetectionManager(config=self.config)
 
-        # Step 3: Spawn background worker thread
+        # Step 3: Clean up any prior terminated thread
+        if self._worker_thread is not None and not self._worker_thread.is_alive():
+            self._worker_thread = None
+
+        # Spawn background worker thread
         self._stop_event.clear()
         self._worker_thread = threading.Thread(
             target=self._worker_loop,
@@ -136,8 +140,8 @@ class GuardianRuntime:
         # Wait briefly for worker to transition to RUNNING
         start_wait = 0.0
         while start_wait < 2.0 and self._status.state == RuntimeState.STARTING:
-            time.sleep(0.05)
-            start_wait += 0.05
+            time.sleep(0.02)
+            start_wait += 0.02
 
         self.persist_status()
 
@@ -179,6 +183,10 @@ class GuardianRuntime:
             self._worker_thread.join(timeout=timeout)
             if self._worker_thread.is_alive():
                 logger.warning("Worker thread did not terminate within %.1fs timeout.", timeout)
+            else:
+                self._worker_thread = None
+        else:
+            self._worker_thread = None
 
         # Release single instance lock
         if self.config.single_instance_enabled:
@@ -187,6 +195,13 @@ class GuardianRuntime:
         with self._lock:
             self._status.state = RuntimeState.STOPPED
             self._status.started_at = None
+            self._restart_attempts = 0
+
+        try:
+            from device_guardian.reliability.metrics import get_reliability_metrics
+            get_reliability_metrics().set_worker_count(0)
+        except Exception:
+            pass
 
         self.persist_status()
         logger.info("Device Guardian runtime stopped successfully.")
@@ -228,6 +243,12 @@ class GuardianRuntime:
 
         logger.info("Guardian background worker running (PID: %d).", os.getpid())
 
+        try:
+            from device_guardian.reliability.metrics import get_reliability_metrics
+            get_reliability_metrics().set_worker_count(1)
+        except Exception:
+            pass
+
         while not self._stop_event.is_set():
             # Check IPC stop signal from another CLI invocation
             if self.single_instance.check_stop_signal():
@@ -249,6 +270,11 @@ class GuardianRuntime:
 
             except Exception as exc:
                 logger.error("Unexpected error in background worker loop: %s", exc)
+                try:
+                    from device_guardian.reliability.metrics import get_reliability_metrics
+                    get_reliability_metrics().record_unexpected_exception(exc)
+                except Exception:
+                    pass
                 with self._lock:
                     self._status.last_error = str(exc)
 
@@ -260,6 +286,11 @@ class GuardianRuntime:
                     if self.config.single_instance_enabled:
                         self.single_instance.release()
                     self.persist_status()
+                    try:
+                        from device_guardian.reliability.metrics import get_reliability_metrics
+                        get_reliability_metrics().set_worker_count(0)
+                    except Exception:
+                        pass
                     return
 
             # Responsive wait on stop event
@@ -271,6 +302,12 @@ class GuardianRuntime:
                 self.detection_manager.monitor.stop()
             except Exception:
                 pass
+
+        try:
+            from device_guardian.reliability.metrics import get_reliability_metrics
+            get_reliability_metrics().set_worker_count(0)
+        except Exception:
+            pass
 
         with self._lock:
             if self._status.state != RuntimeState.FAILED:
@@ -307,7 +344,10 @@ class GuardianRuntime:
             backoff,
         )
 
-        time.sleep(backoff)
+        interrupted = self._stop_event.wait(timeout=backoff)
+        if interrupted or self._stop_event.is_set():
+            logger.info("Stop event signaled during recovery backoff. Aborting restart.")
+            return False
 
         # Re-initialize detector monitor
         try:

@@ -6,7 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
-## [0.1.0] — 2026-09-26
+## [0.1.0] — 2026-09-27
+
+### Phase 14 — Performance, 24-Hour Soak & Reliability Engineering
+#### Added
+- **Operational Reliability Metrics Engine**: Added `ReliabilityMetricsTracker` and `ReliabilityMetrics` in `src/device_guardian/reliability/metrics.py` tracking uptime, events processed, alert counts, queue watermarks, RSS memory baselines/peaks, thread counts, and subsystem failures/recoveries.
+- **Bounded Alert Queue & Backpressure**: Implemented `BoundedAlertQueue` in `src/device_guardian/alerts/queue.py` providing thread-safe queueing with auditable priority preservation (Critical/High over Standard/Low) and capacity drop tracking.
+- **Network Resilience & Circuit Breaker**: Implemented `CircuitBreaker` in `src/device_guardian/reliability/circuit_breaker.py` with states `CLOSED`, `OPEN`, and `HALF_OPEN`. Integrated into `TelegramClient` to fast-fail during network outages and prevent CPU spinning or socket exhaustion.
+- **Log Storm Suppression Filter**: Implemented `DuplicateLogFilter` in `src/device_guardian/logger.py` with sliding window deduplication and strictly bounded cache size to suppress runaway identical log records.
+- **Continuous Soak-Testing Framework**: Built dedicated runner in `src/device_guardian/reliability/soak.py` with configurable modes (`smoke`, `short`, `extended`, `production`), checkpoint durability in JSONL, comprehensive diagnostic summaries, and strict acceptance criteria evaluations (`SoakAcceptanceCriteria`).
+- **Comprehensive Failure Injection & Reliability Test Suite**: Added 36 targeted Phase 14 unit and integration tests across resource lifecycle, alert storm suppression, network recovery, persistence safety, failure injection, performance baselines, and soak acceptance.
 
 ### Phase 12 — Production Distribution, Installer Engineering & Application Lifecycle Management
 #### Added

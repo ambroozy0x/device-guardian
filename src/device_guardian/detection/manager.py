@@ -173,7 +173,18 @@ class DetectionManager:
             event.format_summary(),
         )
 
+        synthetic_flag = (
+            is_synthetic
+            or (event.source == "SyntheticTestMonitor" and bool(event.details.get("test_run", False)))
+        )
+
         # Step 1: Record event in sliding-window threshold engine
+        try:
+            from device_guardian.reliability.metrics import get_reliability_metrics
+            get_reliability_metrics().record_event(is_synthetic=synthetic_flag)
+        except Exception:
+            pass
+
         threshold_reached, count, window_events = self.threshold_engine.record_event(event)
 
         # Step 2: Collect environmental context
@@ -195,10 +206,6 @@ class DetectionManager:
         self._last_auth_env_context = env_context
 
         # Step 3: Evaluate through Smart Filter Engine
-        synthetic_flag = (
-            is_synthetic
-            or (event.source == "SyntheticTestMonitor" and bool(event.details.get("test_run", False)))
-        )
         filter_context = FilterContext(
             event=event,
             environmental_context=env_context,
@@ -213,6 +220,11 @@ class DetectionManager:
         if filter_result.decision == FilterDecision.FILTER:
             if threshold_reached:
                 self.alerts_suppressed_by_filter += 1
+                try:
+                    from device_guardian.reliability.metrics import get_reliability_metrics
+                    get_reliability_metrics().record_alert_suppressed_filter()
+                except Exception:
+                    pass
             self.state = MonitorState.READY
             logger.info(
                 "Event filtered by Smart Filter Engine: [%s] %s",
@@ -230,6 +242,11 @@ class DetectionManager:
 
         if not self.cooldown_manager.can_alert():
             self.alerts_suppressed_by_cooldown += 1
+            try:
+                from device_guardian.reliability.metrics import get_reliability_metrics
+                get_reliability_metrics().record_alert_suppressed_cooldown()
+            except Exception:
+                pass
             self.state = MonitorState.COOLDOWN
             logger.info(
                 "Authentication failure threshold (%d) met, but alert suppressed due to active cooldown "
@@ -260,6 +277,12 @@ class DetectionManager:
             f"({count} events in {self.threshold_engine.window_seconds:.0f}s)"
         )
         try:
+            from device_guardian.reliability.metrics import get_reliability_metrics
+            get_reliability_metrics().record_alert_generated()
+        except Exception:
+            pass
+
+        try:
             result = self.alert_dispatcher(reason=reason, config=self.config)
             # Record alert attempt and reset sliding window to prevent alert storm,
             # even if external notification delivery partially or fully failed
@@ -268,27 +291,67 @@ class DetectionManager:
 
             if result.success:
                 self.alerts_triggered += 1
+                try:
+                    from device_guardian.reliability.metrics import get_reliability_metrics
+                    get_reliability_metrics().record_alert_delivered()
+                except Exception:
+                    pass
                 self.state = MonitorState.ALERT_SENT
                 logger.info("Security alert dispatched successfully.")
                 return True
             else:
                 self.state = MonitorState.ERROR
+                try:
+                    from device_guardian.reliability.metrics import get_reliability_metrics
+                    get_reliability_metrics().record_alert_failed()
+                except Exception:
+                    pass
                 logger.error("Alert pipeline failed: %s", result.error_message)
                 return False
         except Exception as exc:
             self.cooldown_manager.record_alert()
             self.threshold_engine.reset()
             self.state = MonitorState.ERROR
+            try:
+                from device_guardian.reliability.metrics import get_reliability_metrics
+                get_reliability_metrics().record_alert_failed()
+            except Exception:
+                pass
             logger.error("Unexpected error executing alert pipeline: %s", exc)
             return False
 
     def poll_once(self) -> list[AuthenticationFailureEvent]:
         """Poll the active monitor once and process any new events detected.
 
+        Gracefully degrades on transient monitor exceptions without crashing.
+
         Returns:
             List of new authentication failure events detected during the poll.
         """
-        new_events = self.monitor.poll()
+        try:
+            new_events = self.monitor.poll()
+            if getattr(self, "_sensor_degraded", False):
+                self._sensor_degraded = False
+                logger.info("Platform monitor '%s' recovered from degraded state.", self.monitor.get_source_name())
+                try:
+                    from device_guardian.reliability.metrics import get_reliability_metrics
+                    get_reliability_metrics().record_sensor_recovery(self.monitor.get_source_name())
+                except Exception:
+                    pass
+        except Exception as exc:
+            self._sensor_degraded = True
+            logger.warning(
+                "Platform monitor '%s' failed during poll: %s. Operating in degraded mode.",
+                self.monitor.get_source_name(),
+                exc,
+            )
+            try:
+                from device_guardian.reliability.metrics import get_reliability_metrics
+                get_reliability_metrics().record_sensor_failure(self.monitor.get_source_name())
+            except Exception:
+                pass
+            return []
+
         for ev in new_events:
             self.process_event(ev)
         return new_events

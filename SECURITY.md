@@ -164,5 +164,16 @@ Device Guardian enforces an absolute data preservation contract across all lifec
 - **Status**: `NOT IMPLEMENTED / NOT VERIFIED`
 - **Integrity Baseline**: Standalone binaries and release packages are verified using SHA-256 integrity digests and Ed25519 digital signatures documented in `release-manifest.json` and `build-metadata.json`. Commercial EV Authenticode signing is not applied.
 
+---
 
+## 10. Phase 14 — Reliability Engineering, Alert Backpressure & Soak Safety Guarantees
 
+### 10.1 Reliability Threat Model & Protections
+
+| Concern | Operational Risk | Reliability Mitigation & Security Defense |
+| :--- | :--- | :--- |
+| **Alert Storm / Notification DoS** | Attacker repeatedly triggering failures causing Telegram rate limits, CPU spinning, or memory exhaustion. | **Cooldown Manager & Bounded Queue**: `AlertCooldownManager` suppresses duplicate triggers within window; `BoundedAlertQueue` limits pending queue to 100 items with priority preservation (Critical/High alerts evict lower-priority items). Drops are auditable. |
+| **Network Outage / Socket Exhaustion** | Extended internet disconnect causing unbounded retry loops, thread blocking, and log inflation. | **Circuit Breaker Pattern**: `CircuitBreaker` fast-fails calls in `OPEN` state after 5 consecutive failures, avoiding socket exhaustion. Automatically probes for recovery (`HALF_OPEN`) without blocking local monitoring. |
+| **Runaway Logging / Disk Exhaustion** | Infinite loop or recurring failure filling disk space with identical error traces. | **Bounded Rotation & Duplicate Suppression**: `RotatingFileHandler` bounds logs to 10 MB with 5 backups (max 50 MB total); `DuplicateLogFilter` suppresses identical log spam exceeding 5 repeats within 10s using an LRU-pruned cache. |
+| **Resource Leakage Under 24h Soak** | Long-running daemon accumulating threads, unclosed file handles, or unbounded memory. | **Deterministic Lifecycle & Leak Acceptance**: `GuardianRuntime` ensures idempotent worker join; soak testing strictly validates zero permanent thread growth and bounded RSS memory growth against `SoakAcceptanceCriteria`. |
+| **Accidental Real Notification During Soak** | Synthetic load testing accidentally contacting real Telegram chats or leaking secrets. | **Complete Soak Isolation**: `SoakTestRunner` uses isolated temporary test directories, mock in-memory dispatchers, disabled credentials, and never transmits network alerts or touches production user configuration. |

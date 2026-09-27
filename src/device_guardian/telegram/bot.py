@@ -47,6 +47,7 @@ class TelegramClient:
         timeout: float = 10.0,
         max_retries: int = 2,
         retry_backoff: float = 0.25,
+        circuit_breaker: Optional[Any] = None,
     ) -> None:
         """Initialize the Telegram Bot client.
 
@@ -56,6 +57,7 @@ class TelegramClient:
             timeout: Network request timeout in seconds.
             max_retries: Maximum number of retry attempts for transient errors.
             retry_backoff: Base exponential backoff delay in seconds.
+            circuit_breaker: Optional CircuitBreaker instance for network resilience.
         """
         if hasattr(bot_token, "get_secret_value"):
             raw_token = bot_token.get_secret_value()
@@ -78,12 +80,31 @@ class TelegramClient:
         self._max_retries = max_retries
         self._retry_backoff = retry_backoff
 
+        if circuit_breaker is not None:
+            self._circuit_breaker = circuit_breaker
+        else:
+            try:
+                from device_guardian.reliability.circuit_breaker import CircuitBreaker
+                self._circuit_breaker = CircuitBreaker(
+                    name="telegram_api",
+                    failure_threshold=5,
+                    recovery_timeout=30.0,
+                    success_threshold=2,
+                )
+            except Exception:
+                self._circuit_breaker = None
+
         try:
             from device_guardian.security.redactor import get_redactor
             get_redactor().register_secret(self._token)
             get_redactor().register_secret(self._chat_id)
         except Exception:
             pass
+
+    @property
+    def circuit_breaker(self) -> Optional[Any]:
+        """Access the circuit breaker instance protecting this client."""
+        return getattr(self, "_circuit_breaker", None)
 
     @property
     def _base_url(self) -> str:
@@ -120,6 +141,17 @@ class TelegramClient:
         - HTTP 401 (unauthorized, invalid bot token)
         - HTTP 403 (forbidden, bot blocked)
         """
+        cb = getattr(self, "_circuit_breaker", None)
+        if cb is not None and not cb.allow_request():
+            logger.warning(
+                "Telegram circuit breaker is OPEN. Fast-failing '%s' without network dispatch.",
+                op_name,
+            )
+            return TelegramResponse(
+                success=False,
+                error_message="Telegram circuit breaker is OPEN (service unavailable; failing fast).",
+            )
+
         last_error_message = ""
         for attempt in range(self._max_retries + 1):
             if attempt > 0 and reset_func:
@@ -131,10 +163,17 @@ class TelegramClient:
                 response = request_func()
                 # If success (2xx) or permanent client error (4xx except 429), return immediately without retrying
                 if response.status_code < 400 or (response.status_code < 500 and response.status_code != 429):
+                    if response.status_code < 400 and cb is not None:
+                        cb.record_success()
                     return self._handle_response(response)
 
                 # Transient HTTP error (429 or 5xx)
                 if attempt < self._max_retries:
+                    try:
+                        from device_guardian.reliability.metrics import get_reliability_metrics
+                        get_reliability_metrics().record_retry()
+                    except Exception:
+                        pass
                     backoff = self._retry_backoff * (2 ** attempt)
                     logger.warning(
                         "Transient HTTP %d during %s (attempt %d/%d). Retrying in %.2fs...",
@@ -147,11 +186,18 @@ class TelegramClient:
                     time.sleep(backoff)
                     continue
                 else:
+                    if cb is not None:
+                        cb.record_failure()
                     return self._handle_response(response)
 
             except requests.exceptions.Timeout:
                 last_error_message = timeout_error_msg
                 if attempt < self._max_retries:
+                    try:
+                        from device_guardian.reliability.metrics import get_reliability_metrics
+                        get_reliability_metrics().record_retry()
+                    except Exception:
+                        pass
                     backoff = self._retry_backoff * (2 ** attempt)
                     logger.warning(
                         "%s timed out (attempt %d/%d). Retrying in %.2fs...",
@@ -163,6 +209,8 @@ class TelegramClient:
                     time.sleep(backoff)
                     continue
                 else:
+                    if cb is not None:
+                        cb.record_failure()
                     logger.error(timeout_error_msg)
                     return TelegramResponse(success=False, error_message=timeout_error_msg)
 
@@ -170,6 +218,11 @@ class TelegramClient:
                 sanitized_err = self._sanitize(str(exc))
                 last_error_message = f"Network error: {sanitized_err}"
                 if attempt < self._max_retries:
+                    try:
+                        from device_guardian.reliability.metrics import get_reliability_metrics
+                        get_reliability_metrics().record_retry()
+                    except Exception:
+                        pass
                     backoff = self._retry_backoff * (2 ** attempt)
                     logger.warning(
                         "%s network error: %s (attempt %d/%d). Retrying in %.2fs...",
@@ -182,9 +235,13 @@ class TelegramClient:
                     time.sleep(backoff)
                     continue
                 else:
+                    if cb is not None:
+                        cb.record_failure()
                     logger.error("Telegram network error: %s", sanitized_err)
                     return TelegramResponse(success=False, error_message=last_error_message)
 
+        if cb is not None:
+            cb.record_failure()
         return TelegramResponse(success=False, error_message=last_error_message or "Unknown failure after retries.")
 
     def verify_credentials(self) -> TelegramResponse:
