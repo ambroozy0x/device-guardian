@@ -7,10 +7,11 @@ user trust boundaries.
 from __future__ import annotations
 
 import ipaddress
-from typing import Iterable, Optional
+from typing import TYPE_CHECKING, Iterable, Optional
 
-from device_guardian.detection.models import AuthenticationFailureEvent
-from device_guardian.environment.models import EnvironmentalContext
+if TYPE_CHECKING:
+    from device_guardian.detection.models import AuthenticationFailureEvent
+    from device_guardian.environment.models import EnvironmentalContext
 from device_guardian.logger import get_logger
 
 logger = get_logger("filtering.trusted")

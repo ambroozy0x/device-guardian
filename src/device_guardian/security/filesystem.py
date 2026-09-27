@@ -104,6 +104,19 @@ def validate_safe_path(
         )
         raise SecurityPathError("Null byte injection detected in path.")
 
+    # 1b. Encoded path traversal and null byte check
+    if "%" in raw:
+        import urllib.parse
+        unquoted = urllib.parse.unquote(raw)
+        if "\0" in unquoted or ".." in unquoted.replace("\\", "/").split("/"):
+            log_security_event(
+                SecurityEventType.SECURITY_PATH_REJECTED,
+                subsystem="filesystem",
+                message="Encoded path traversal or null byte detected.",
+                details={"raw_path": raw},
+            )
+            raise SecurityPathError(f"Encoded path traversal rejected: '{raw}'")
+
     # 2. UNC path check (\\server\share or //server/share)
     if not allow_unc and (raw.startswith(r"\\") or raw.startswith("//")):
         log_security_event(

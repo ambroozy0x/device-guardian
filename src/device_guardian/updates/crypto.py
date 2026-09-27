@@ -171,12 +171,13 @@ def generate_ed25519_keypair(seed: Optional[bytes] = None) -> tuple[bytes, bytes
     return private_seed, public_key
 
 
-def sign_ed25519(message: bytes, private_seed: bytes) -> bytes:
+def sign_ed25519(message: bytes, private_seed: bytes, public_key: Optional[bytes] = None) -> bytes:
     """Sign an arbitrary message using an Ed25519 private key seed.
 
     Args:
         message: Raw bytes to sign.
         private_seed: 32-byte private key seed.
+        public_key: Optional public key bytes (derived automatically if omitted).
 
     Returns:
         64-byte Ed25519 signature.
@@ -241,3 +242,9 @@ def verify_ed25519(message: bytes, signature: bytes, public_key: bytes) -> bool:
     R_plus_kA = _edwards_add(R, kA)
 
     return _encodepoint(SB) == _encodepoint(R_plus_kA)
+
+
+# Aliases for API compatibility
+generate_keypair = generate_ed25519_keypair
+ed25519_sign = sign_ed25519
+ed25519_verify = verify_ed25519

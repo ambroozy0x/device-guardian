@@ -122,7 +122,20 @@ def get_approximate_location(
     Returns:
         LocationInfo containing approximate coordinates or fallback 'Unavailable' data.
     """
-    logger.info("Querying approximate location from: %s", api_url)
+    # Phase 15 Hardening: Validate URL scheme and bound timeout
+    clean_url = str(api_url or "").strip()
+    if not clean_url or not clean_url.lower().startswith(("http://", "https://")):
+        logger.warning("Invalid or non-HTTP location API URL rejected: %s", clean_url)
+        return LocationInfo()
+
+    if clean_url.lower().startswith("http://"):
+        logger.warning(
+            "Insecure plaintext HTTP location API in use: '%s'. HTTPS is strongly recommended.",
+            clean_url,
+        )
+
+    bounded_timeout = max(0.5, min(float(timeout), 60.0))
+    logger.info("Querying approximate location from: %s", clean_url)
 
     # Some APIs require a User-Agent header to prevent 403 blocks
     headers = {
@@ -130,7 +143,7 @@ def get_approximate_location(
     }
 
     try:
-        response = requests.get(api_url, headers=headers, timeout=timeout)
+        response = requests.get(clean_url, headers=headers, timeout=bounded_timeout)
 
         if response.status_code != 200:
             logger.warning(

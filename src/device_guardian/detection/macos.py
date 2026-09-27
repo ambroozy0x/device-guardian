@@ -12,6 +12,7 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import json
 import platform
+import re
 import shutil
 import subprocess
 from typing import Any, Callable, Optional
@@ -21,6 +22,25 @@ from device_guardian.detection.models import AuthenticationFailureEvent
 from device_guardian.logger import get_logger
 
 logger = get_logger("detection.macos")
+
+_CREDENTIAL_PATTERN = re.compile(
+    r"(?i)\b(?:password|passwd|secret|token|credential|pass)\b(?:\s+(?:is|was|with|for))?\s*[:=]?\s*['\"]?\S+['\"]?"
+)
+
+
+def _scrub_entry(text: str) -> str:
+    """Scrub potential credentials and registered secrets from log entry snippets."""
+    if not text:
+        return ""
+    scrubbed = _CREDENTIAL_PATTERN.sub("[REDACTED]", text)
+    try:
+        from device_guardian.security.redactor import get_redactor
+
+        scrubbed = get_redactor().redact(scrubbed)
+    except Exception:
+        pass
+    return scrubbed
+
 
 
 class MacOSAuthLogMonitor(BaseAuthenticationMonitor):
@@ -179,7 +199,7 @@ class MacOSAuthLogMonitor(BaseAuthenticationMonitor):
                     username="Unavailable",
                     remote_address="Local Console" if auth_type == "local" else "Unavailable",
                     authentication_type=auth_type,
-                    details={"process": process_name, "raw_entry_truncated": msg[:120]},
+                    details={"process": process_name, "raw_entry_truncated": _scrub_entry(msg[:120])},
                 )
                 events.append(norm_event)
 

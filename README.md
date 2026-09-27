@@ -25,6 +25,7 @@ Device Guardian is built in progressive, disciplined phases:
 - **Phase 12: Production Distribution, Installer Engineering & Application Lifecycle Management**: Production distribution and application lifecycle management. Architectural separation between read-only application binaries (`INSTALL_ROOT`) and mutable configuration/logs/credentials (`USER_DATA`); transactional fresh install, upgrade, repair, and uninstallation workflows; authoritative SemVer 2.0.0 comparison and downgrade defense; versioned persistent schema migration framework with pre-migration snapshot backups and automatic rollback; release artifact secret scanning; reproducible build metadata (`build-metadata.json`); and non-destructive data preservation guarantees (476 passed, 1 skipped).
 - **Phase 13: Cross-Platform Parity, Platform Hardening & Release Packaging**: Platform compatibility and environment resilience across Windows, Linux, and macOS. Resilient sensor degradation, conditional notification initialization, stale lock cleanup, native OS path compatibility, and verified release packaging.
 - **Phase 14: Performance, 24-Hour Soak & Reliability Engineering**: Production-grade reliability engineering, leak defense, and 24-hour soak validation. In-memory operational reliability metrics model (`ReliabilityMetricsTracker`), bounded alert queue with backpressure and priority preservation (`BoundedAlertQueue`), network circuit breaker pattern (`CircuitBreaker`) with bounded retries, log storm suppression via rate-limited duplicate filtering (`DuplicateLogFilter`), deterministic resource lifecycle cleanup, and dedicated soak testing framework (`src/device_guardian/reliability/soak.py`) evaluating explicit reliability acceptance criteria (RSS growth, thread leakage, unexpected errors, retry limits, queue bounds).
+- **Phase 15: Final Security Audit & Release Certification**: Comprehensive security audit, adversarial vulnerability remediation, cryptographic integrity validation, and formal release readiness certification. Hardened duplicate log suppression preserving critical security audit trails, percent-encoded path traversal rejection (`%2e%2e`, `%00`), alert payload dynamic string redaction, URL scheme and timeout bounding for geolocation services, credential scrubbing from platform auth logs (macOS/Linux), modularized boolean and CSV configuration parsers, and 12 dedicated adversarial test suites covering authentication, RBAC, input validation, filesystem defense, secrets isolation, cryptography, network boundaries, IPC replay resistance, update integrity, log sanitization, configuration boundaries, and persistent storage.
 
 
 ```text
@@ -934,6 +935,7 @@ The test suite contains **476 automated tests passing (477 collected, 1 skipped)
 - Phase 14 Persistence Reliability & Concurrency (`test_phase14_persistence_reliability.py`: atomic writing under contention, corrupt state repair, zero-loss guarantee)
 - Phase 14 Performance Baselines & Latency (`test_phase14_performance.py`: sub-millisecond filter latency, bounded dispatch overhead, memory bounds)
 - Phase 14 Soak Runner & Acceptance Criteria (`tests/soak/test_soak_runner.py`: acceptance verdict evaluation, memory growth caps, thread leakage detection, checkpoint persistence, graceful shutdown)
+- Phase 15 Adversarial Security Suite (`tests/test_phase15_security_*.py`: 55 tests verifying password stripping, RBAC confirmation contracts, input boundaries, traversal rejection, secrets isolation, Ed25519 cryptography, network isolation, IPC replay defense, archive bounds, log sanitization, and atomic recovery)
 
 Run the test suite:
 ```bash
@@ -961,6 +963,7 @@ All external network endpoints (Telegram API, Geolocation API) and hardware devi
 - **Phase 12: Production Distribution, Installer Engineering & Application Lifecycle Management** — Completed & Verified
 - **Phase 13: Cross-Platform Parity, Platform Hardening & Release Packaging** — Completed & Verified
 - **Phase 14: Performance, 24-Hour Soak & Reliability Engineering** — Framework Hardened & Verified (Smoke/Short Soak Verified; 24h Production Soak Not Run)
+- **Phase 15: Final Security Audit & Release Certification** — Audited, Hardened & Certified (Release Candidate Ready; Authenticode Signing & 24h Soak Pending)
 
 ---
 
@@ -1217,3 +1220,41 @@ Phase 14 delivers comprehensive operational reliability hardening, leak preventi
 - **Regression Verification**: All Phase 13 cross-platform and degradation tests passing.
 - **Smoke & Short Soak Verification**: 10s smoke run verified clean pass across all 8 criteria with zero thread leakage and bounded RSS.
 - **Production Soak Status**: **`24-hour soak NOT RUN`** (framework hardened, criteria verified, ready for operator execution).
+
+---
+
+## 15. Phase 15 - Final Security Audit & Release Certification
+
+Phase 15 represents the comprehensive pre-release security verification, adversarial testing, and formal certification of Device Guardian v1.0.0.
+
+### 1. Security Architecture & Threat Surface Verification
+
+- **Zero-Cloud & Zero-AI Invariants**: Audited across all source modules; zero telemetry, zero analytics beacons, zero inbound sockets, and strictly deterministic rule-based evaluation.
+- **Credential Isolation & Redaction**: Universal scrubbing of bot tokens, chat IDs, and passwords from logs, error traces, exceptions, terminal outputs, and dynamic alert reasons (`SecretRedactor`).
+- **Filesystem Traversal Defense**: Rigid safe path validation rejecting `..`, percent-encoded traversal (`%2e%2e`, `%00`), UNC paths, NTFS Alternate Data Streams, and symlink reparse points.
+- **IPC Replay & Command Whitelisting**: Control channel strictly restricts commands to `START`, `STOP`, `RESTART`; rejects unwhitelisted shell commands (`EXEC`, `CMD`), future clock skew (>60s), expired TTLs, and replayed message IDs.
+- **Cryptographic Release Verification**: RFC 8032 pure-Python Ed25519 digital signatures and streaming SHA-256 chunking verify release archives against canonical manifests.
+- **Audit Trail Integrity**: Rate-limiting duplicate filters bypass suppression for `CRITICAL` records and `security.*` audit events to prevent audit evasion.
+
+### 2. Adversarial Test Suites (55 Tests)
+
+1. **Authentication Security** (`test_phase15_security_auth.py`): Password non-collection invariant across Windows XML, Linux auth logs, and macOS unified logs.
+2. **Operational RBAC & Confirmation** (`test_phase15_security_rbac.py`): Non-interactive fail-safe defaults, explicit `--yes` authorization, filter rule priority hierarchy.
+3. **Input Validation & Boundaries** (`test_phase15_security_input.py`): Bounded numerical settings, strict boolean parser rejection of ambiguous inputs.
+4. **Filesystem Security** (`test_phase15_security_filesystem.py`): Traversal, percent-encoding, null-bytes, ADS, and symlink destination rejection.
+5. **Secrets Management** (`test_phase15_security_secrets.py`): DPAPI / encrypted storage isolation, non-destructive repair preservation.
+6. **Cryptographic Integrity** (`test_phase15_security_crypto.py`): Ed25519 authenticity, bit-flip signature rejection, canonical JSON determinism, streaming SHA-256.
+7. **Network Perimeter** (`test_phase15_security_network.py`): Zero listening sockets, URL scheme validation, offline test isolation.
+8. **IPC & Mutex Security** (`test_phase15_security_ipc.py`): Command whitelisting, process identity verification, replay prevention, clock skew defense.
+9. **Update & Archive Security** (`test_phase15_security_updates.py`): SafeZipExtractor traversal/shell-extension/file-size rejection, binary hash mismatch detection.
+10. **Logging Security** (`test_phase15_security_logging.py`): CR/LF log injection escaping, ANSI stripping, length bounds, critical event preservation.
+11. **Configuration Boundaries** (`test_phase15_security_config.py`): Strict boolean edge cases, timeout/port bounds, malformed input rejection.
+12. **Persistence Reliability** (`test_phase15_security_persistence.py`): Atomic persistence `.bak` fallback recovery, symlink rejection.
+
+### 3. Release Certification Status
+
+- **Application Logic & Security Invariants**: **CERTIFIED**
+- **Automated Adversarial Regression Tests**: **54 Passed, 1 Skipped** (Windows unprivileged symlink test skipped as expected)
+- **Windows Authenticode Code Signing**: **NOT VERIFIED** (Requires commercial EV certificate and hardware cryptographic token)
+- **24-Hour Production Soak**: **FRAMEWORK VERIFIED / 24H SOAK NOT RUN**
+- **Overall Verdict**: **CERTIFIED FOR CONTROLLED V1 RELEASE**

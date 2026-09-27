@@ -90,6 +90,10 @@ class DuplicateLogFilter(logging.Filter):
         self._cache: dict[tuple[int, str, str], list[Any]] = {}
 
     def filter(self, record: logging.LogRecord) -> bool:
+        # Phase 15 Hardening: Security audit events and CRITICAL records must never be suppressed
+        if record.levelno >= logging.CRITICAL or record.name == "security" or record.name.startswith("security."):
+            return True
+
         now = time.time()
         sig = (record.levelno, record.name, str(record.msg))
 

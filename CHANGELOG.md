@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] — 2026-09-27
 
+### Phase 15 — Final Security Audit & Release Certification
+#### Added
+- **Adversarial Security Regression Test Suite**: 55 automated adversarial regression tests (`tests/test_phase15_security_*.py`) covering Authentication sanitization, RBAC operator contracts, Input injection/boundary defense, Filesystem traversal defenses, Secrets storage & recovery isolation, Cryptographic Ed25519/SHA-256 integrity, Network perimeter isolation, IPC replay defense & clock skew, Update package validation, Audit log sanitization & retention, Configuration parsing boundaries, and Atomic persistence safety.
+- **Critical Security Audit Trail Preservation**: Hardened `DuplicateLogFilter` in `src/device_guardian/logger.py` so that log records with level `CRITICAL` or from `security.*` loggers bypass duplicate suppression, guaranteeing zero audit loss during high-frequency security events.
+- **Percent-Encoded Path Traversal Protection**: Hardened `validate_safe_path` in `src/device_guardian/security/filesystem.py` against URL/percent-encoded traversal sequences (`%2e%2e`, `%00`).
+- **Dynamic Alert Reason Redaction**: Integrated `SecretRedactor` into `AlertEvent.format_telegram_message` in `src/device_guardian/alerts/models.py` to scrub secrets from dynamic event reasoning strings before network transmission.
+- **Geolocation URL Scheme & Timeout Validation**: Hardened `get_approximate_location` in `src/device_guardian/location/geolocation.py` with URL scheme validation (`https://` enforcement, rejection of dangerous schemes) and bounded timeouts (`[0.5, 60.0]s`).
+- **Platform Authentication Log Credential Scrubbing**: Hardened `parse_log_stream` in `src/device_guardian/detection/macos.py` with `_scrub_entry` to strip credentials and passwords from raw event snippets before storing in event details.
+- **Modularized Configuration Parsers**: Promoted `_parse_bool` and `_parse_csv` in `src/device_guardian/config.py` to module level for robust testing and direct validation.
+- **Release Manifest & Crypto Compatibility Aliases**: Added `save = save_to_file` on `ReleaseManifest` and exported `generate_keypair`, `ed25519_sign`, and `ed25519_verify` in `src/device_guardian/updates/crypto.py`.
+- **Formal Security Audit & Certification Report**: Documented vulnerability classifications, attack surface reviews, privilege boundaries, and release certification verdicts in `SECURITY.md`.
+
 ### Phase 14 — Performance, 24-Hour Soak & Reliability Engineering
 #### Added
 - **Operational Reliability Metrics Engine**: Added `ReliabilityMetricsTracker` and `ReliabilityMetrics` in `src/device_guardian/reliability/metrics.py` tracking uptime, events processed, alert counts, queue watermarks, RSS memory baselines/peaks, thread counts, and subsystem failures/recoveries.

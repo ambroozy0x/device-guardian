@@ -14,7 +14,7 @@ from datetime import datetime
 import platform
 import threading
 import time
-from typing import Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 from device_guardian.alerts.pipeline import AlertResult, trigger_alert
 from device_guardian.config import AppConfig, load_config
@@ -32,10 +32,12 @@ from device_guardian.detection.voice import OfflineVoiceWarning
 from device_guardian.detection.windows import WindowsSecurityLogMonitor
 from device_guardian.environment.detector import EnvironmentalDetector
 from device_guardian.environment.models import EnvironmentalContext
-from device_guardian.filtering.engine import SmartFilterEngine
 from device_guardian.filtering.models import FilterContext, FilterDecision, FilterResult
 from device_guardian.filtering.trusted import TrustedContext
 from device_guardian.logger import get_logger
+
+if TYPE_CHECKING:
+    from device_guardian.filtering.engine import SmartFilterEngine
 
 logger = get_logger("detection.manager")
 
@@ -126,11 +128,16 @@ class DetectionManager:
             trusted_networks=self.config.trusted_networks,
             trusted_auth_types=self.config.trusted_auth_types,
         )
-        self.filter_engine = filter_engine or SmartFilterEngine(
-            trusted_context=trusted_ctx,
-            filtering_enabled=self.config.smart_filtering_enabled,
-            require_context_for_alert=self.config.require_context_for_alert,
-        )
+        if filter_engine is not None:
+            self.filter_engine = filter_engine
+        else:
+            from device_guardian.filtering.engine import SmartFilterEngine
+
+            self.filter_engine = SmartFilterEngine(
+                trusted_context=trusted_ctx,
+                filtering_enabled=self.config.smart_filtering_enabled,
+                require_context_for_alert=self.config.require_context_for_alert,
+            )
 
         self._last_auth_env_context: Optional[EnvironmentalContext] = None
         self.state: MonitorState = MonitorState.READY

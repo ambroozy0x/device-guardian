@@ -96,17 +96,18 @@ class ReleaseManifest:
         }
         return canonicalize_json(data)
 
-    def sign(self, private_key: bytes) -> str:
+    def sign(self, private_key: bytes, public_key: Optional[bytes] = None) -> str:
         """Sign this manifest with an Ed25519 private key seed.
 
         Args:
             private_key: 32-byte Ed25519 private seed.
+            public_key: Optional 32-byte public key.
 
         Returns:
             Hex-encoded 64-byte Ed25519 digital signature.
         """
         payload = self.get_canonical_payload()
-        sig_bytes = sign_ed25519(payload, private_key)
+        sig_bytes = sign_ed25519(payload, private_key, public_key)
         self.signature = binascii.hexlify(sig_bytes).decode("ascii")
         return self.signature
 
@@ -169,6 +170,8 @@ class ReleaseManifest:
         tmp_target.write_text(self.to_json(), encoding="utf-8")
         tmp_target.replace(target)
         return target
+
+    save = save_to_file
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> ReleaseManifest:

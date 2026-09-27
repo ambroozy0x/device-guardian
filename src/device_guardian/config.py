@@ -348,6 +348,26 @@ class AppConfig:
             )
 
 
+def _parse_bool(val: Optional[str], default: bool, var_name: str = "") -> bool:
+    if val is None or not str(val).strip():
+        return default
+    cleaned = str(val).lower().strip()
+    if cleaned in {"true", "1", "yes", "on"}:
+        return True
+    if cleaned in {"false", "0", "no", "off"}:
+        return False
+    name_str = f" for {var_name}" if var_name else ""
+    raise ConfigurationError(
+        f"Invalid boolean value '{val}'{name_str}. Must be one of: true, false, 1, 0, yes, no, on, off."
+    )
+
+
+def _parse_csv(val: Optional[str]) -> list[str]:
+    if not val or not str(val).strip():
+        return []
+    return [item.strip() for item in str(val).split(",") if item.strip()]
+
+
 def load_config(env_path: Optional[Path | str] = None) -> AppConfig:
     """Load configuration from environment variables and an optional .env file.
 
@@ -428,25 +448,6 @@ def load_config(env_path: Optional[Path | str] = None) -> AppConfig:
         raise ConfigurationError(
             f"Invalid AUTH_ALERT_COOLDOWN_SECONDS: '{raw_cooldown}'. Must be a number."
         )
-
-    # Strict boolean parser
-    def _parse_bool(val: Optional[str], default: bool, var_name: str = "") -> bool:
-        if val is None or not str(val).strip():
-            return default
-        cleaned = str(val).lower().strip()
-        if cleaned in {"true", "1", "yes", "on"}:
-            return True
-        if cleaned in {"false", "0", "no", "off"}:
-            return False
-        name_str = f" for {var_name}" if var_name else ""
-        raise ConfigurationError(
-            f"Invalid boolean value '{val}'{name_str}. Must be one of: true, false, 1, 0, yes, no, on, off."
-        )
-
-    def _parse_csv(val: Optional[str]) -> list[str]:
-        if not val or not str(val).strip():
-            return []
-        return [item.strip() for item in str(val).split(",") if item.strip()]
 
     # Parse voice warning settings
     voice_warning_enabled = _parse_bool(

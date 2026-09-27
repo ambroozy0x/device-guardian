@@ -41,10 +41,16 @@ class AlertEvent:
         - Transparently states 'Unavailable' for missing location or camera data.
         - Includes approximate coordinates and map link only when available.
         """
+        try:
+            from device_guardian.security.redactor import get_redactor
+            clean_reason = get_redactor().redact(self.reason)
+        except Exception:
+            clean_reason = self.reason
+
         lines = [
             "🚨 DEVICE GUARDIAN ALERT",
             "",
-            f"Reason: {self.reason}",
+            f"Reason: {clean_reason}",
             "",
             f"Time: {self.formatted_timestamp}",
             "",

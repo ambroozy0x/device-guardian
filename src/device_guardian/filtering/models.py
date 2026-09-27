@@ -9,10 +9,11 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
-from device_guardian.detection.models import AuthenticationFailureEvent
-from device_guardian.environment.models import EnvironmentalContext
+if TYPE_CHECKING:
+    from device_guardian.detection.models import AuthenticationFailureEvent
+    from device_guardian.environment.models import EnvironmentalContext
 
 
 class FilterDecision(str, Enum):
