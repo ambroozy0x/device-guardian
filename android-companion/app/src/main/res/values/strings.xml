@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">DeviceGuardian</string>
+    <string name="app_name">Device Guardian</string>
+    <string name="device_admin_label">Device Guardian Protection</string>
+    <string name="device_admin_description">Detects failed screen unlock attempts, captures intruder photos, and dispatches GPS alerts to Telegram.</string>
 </resources>
