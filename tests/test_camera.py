@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 
-from device_guardian.camera.capture import CameraError, capture_photo
+from device_guardian.camera.capture import CameraError, capture_photo, capture_photos
 
 
 def test_capture_photo_fails_when_camera_cannot_open():
@@ -63,4 +63,35 @@ def test_capture_photo_success_flow(tmp_path: Path):
         assert saved_path.exists()
         assert saved_path.name.startswith("capture_")
         assert saved_path.suffix == ".jpg"
+        mock_cap.release.assert_called()
+
+
+def test_capture_photos_burst_mode(tmp_path: Path):
+    """Verify capture_photos produces requested count of images in burst mode."""
+    dummy_frame = np.zeros((100, 100, 3), dtype=np.uint8)
+
+    with patch("cv2.VideoCapture") as mock_vc, patch("cv2.imwrite") as mock_imwrite:
+        mock_cap = MagicMock()
+        mock_cap.isOpened.return_value = True
+        mock_cap.read.return_value = (True, dummy_frame)
+        mock_vc.return_value = mock_cap
+
+        def fake_imwrite(filepath, img):
+            Path(filepath).write_bytes(b"dummy jpeg data")
+            return True
+
+        mock_imwrite.side_effect = fake_imwrite
+
+        saved_paths = capture_photos(
+            camera_index=0,
+            count=3,
+            output_dir=tmp_path,
+            warmup_frames=1,
+            interval_seconds=0.01,
+        )
+
+        assert len(saved_paths) == 3
+        for idx, p in enumerate(saved_paths, start=1):
+            assert p.exists()
+            assert f"_{idx}.jpg" in p.name
         mock_cap.release.assert_called()

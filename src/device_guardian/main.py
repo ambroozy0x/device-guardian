@@ -2013,6 +2013,18 @@ def main(argv: Optional[list[str]] = None) -> int:
         help="Display host platform compatibility, architecture, and subsystem support (Phase 13)",
     )
     parser.add_argument(
+        "--set-location",
+        nargs="+",
+        metavar=("LAT", "LON"),
+        help="Configure exact fixed GPS location coordinates (e.g. --set-location 11.074027 75.982030 'Cherur, Malappuram')",
+    )
+    parser.add_argument(
+        "--burst",
+        type=int,
+        metavar="COUNT",
+        help="Set the number of burst photos captured per security alert (1 to 10, default: 3)",
+    )
+    parser.add_argument(
         "--version",
         "-v",
         action="version",
@@ -2036,7 +2048,38 @@ def main(argv: Optional[list[str]] = None) -> int:
     except Exception as exc:
         logger.debug("Startup transaction recovery check non-critical error: %s", exc)
 
-    if args.setup:
+    if args.set_location:
+        from device_guardian.setup.storage import load_config, safe_save_config
+        try:
+            lat = float(args.set_location[0])
+            lon = float(args.set_location[1])
+            name = args.set_location[2] if len(args.set_location) > 2 else "Home Location"
+            cfg = load_config()
+            cfg.exact_latitude = lat
+            cfg.exact_longitude = lon
+            cfg.exact_location_name = name
+            safe_save_config(cfg)
+            print(f"[OK] Exact location configured: {name} (Lat: {lat}, Lon: {lon})")
+            print(f"     Map: https://maps.google.com/?q={lat},{lon}")
+            return 0
+        except Exception as exc:
+            print(f"[ERROR] Failed to save exact location: {exc}")
+            return 1
+    elif args.burst:
+        from device_guardian.setup.storage import load_config, safe_save_config
+        try:
+            if not 1 <= args.burst <= 10:
+                print("[ERROR] Burst count must be between 1 and 10.")
+                return 1
+            cfg = load_config()
+            cfg.camera_photo_count = args.burst
+            safe_save_config(cfg)
+            print(f"[OK] Alert photo burst count set to {args.burst} photo(s).")
+            return 0
+        except Exception as exc:
+            print(f"[ERROR] Failed to save burst count: {exc}")
+            return 1
+    elif args.setup:
         ok = run_setup_wizard()
         return 0 if ok else 1
     elif args.release_info:

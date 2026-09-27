@@ -57,6 +57,10 @@ def format_env_file(config: AppConfig) -> str:
         f"AUTO_RESTART_ENABLED={'true' if getattr(config, 'auto_restart_enabled', True) else 'false'}\n"
         f"MAX_RESTART_ATTEMPTS={getattr(config, 'max_restart_attempts', 3)}\n"
         f"RESTART_BACKOFF_SECONDS={getattr(config, 'restart_backoff_seconds', 2.0)}\n"
+        f"CAMERA_PHOTO_COUNT={getattr(config, 'camera_photo_count', 3)}\n"
+        f"EXACT_LATITUDE={getattr(config, 'exact_latitude', '') if getattr(config, 'exact_latitude', None) is not None else ''}\n"
+        f"EXACT_LONGITUDE={getattr(config, 'exact_longitude', '') if getattr(config, 'exact_longitude', None) is not None else ''}\n"
+        f"EXACT_LOCATION_NAME={getattr(config, 'exact_location_name', '') or ''}\n"
     )
 
 

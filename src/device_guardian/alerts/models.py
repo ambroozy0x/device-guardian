@@ -21,7 +21,14 @@ class AlertEvent:
     reason: str
     timestamp: datetime = field(default_factory=datetime.now)
     image_path: Optional[Path] = None
+    image_paths: list[Path] = field(default_factory=list)
     location: LocationInfo = field(default_factory=LocationInfo)
+
+    def __post_init__(self) -> None:
+        if self.image_paths and self.image_path is None:
+            self.image_path = self.image_paths[0]
+        elif self.image_path is not None and not self.image_paths:
+            self.image_paths = [self.image_path]
 
     @property
     def camera_path(self) -> Optional[Path]:

@@ -10,7 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Added
 - **Official v1.0.0 Release**: Certified controlled v1.0.0 production baseline with unified version metadata across `device_guardian.version`, `pyproject.toml`, and runtime models.
 - **Dynamic Application Versioning**: Integrated dynamic `__version__` into geolocation User-Agent headers, lifecycle records, and installation metadata, eliminating hardcoded version drift.
-- **Clean Standalone Windows Release**: Compiled and verified clean PyInstaller binary (`dist/device-guardian.exe`, 69.84 MB) with matching streaming SHA-256 digest (`2a6fa0617dd235c510b2eff8a61dfa7423c27d1c5971faa9d83adac39731e89e`).
+- **Multi-Photo Burst Security Alerts**: Added rapid multi-photo burst capture (default: 3 photos at 0.35s intervals) and sequential Telegram delivery, configurable via `--burst <count>` and `CAMERA_PHOTO_COUNT`.
+- **Exact GPS Pinpoint Configuration**: Added support for exact home/office GPS coordinates via `--set-location <lat> <lon> [place_name]` or `.env` (`EXACT_LATITUDE`, `EXACT_LONGITUDE`), overriding approximate IP geolocation with exact map pin accuracy.
+- **Resilient Geolocation Fallback**: Added automatic fallback to `http://ip-api.com/json/` when primary geolocation providers encounter carrier rate-limits or Cloudflare blocks.
+- **Clean Standalone Windows Release**: Compiled and verified clean PyInstaller binary (`dist/device-guardian.exe`, 69.85 MB) with matching streaming SHA-256 digest (`e660963a8bbe709d3a76e859b8af01c1fa638812d9fe0f91d5d308531c0ffd90`).
 - **Release Manifest & Reproducible Metadata**: Generated authoritative `dist/release-manifest.json` and machine-readable `dist/build-metadata.json`.
 - **Zero-Secret Artifact Verification**: Executed automated release secret scan confirming zero sensitive files, bot tokens, or private keys in compiled outputs.
 - **Installation Integrity Validation**: Verified physical frozen execution and manifest hash matching via `--verify-installation`.

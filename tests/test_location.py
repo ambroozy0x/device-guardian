@@ -143,7 +143,47 @@ def test_get_approximate_location_api_error_flag(mock_get):
         "error": True,
         "reason": "Rate limited",
     }
-    mock_get.return_value = mock_resp
-
     loc = get_approximate_location("https://ipapi.co/json/", timeout=5.0)
     assert loc.is_available is False
+
+
+def test_get_approximate_location_exact_coordinates():
+    """Verify configured exact coordinates return accurate location without network requests."""
+    loc = get_approximate_location(
+        exact_latitude=11.074027,
+        exact_longitude=75.982030,
+        exact_location_name="Cherur, Malappuram",
+    )
+    assert loc.is_available is True
+    assert loc.latitude == 11.074027
+    assert loc.longitude == 75.982030
+    assert loc.city == "Cherur, Malappuram"
+    assert loc.map_url == "https://maps.google.com/?q=11.074027,75.982030"
+
+
+@patch("requests.get")
+def test_get_approximate_location_fallback_to_ip_api(mock_get):
+    """Verify fallback to ip-api.com when primary ipapi.co fails."""
+    primary_fail = MagicMock()
+    primary_fail.status_code = 403
+
+    fallback_ok = MagicMock()
+    fallback_ok.status_code = 200
+    fallback_ok.json.return_value = {
+        "status": "success",
+        "city": "Malappuram",
+        "regionName": "Kerala",
+        "country": "India",
+        "lat": 11.0341,
+        "lon": 76.0769,
+        "query": "157.51.204.98",
+    }
+
+    mock_get.side_effect = [primary_fail, fallback_ok]
+
+    loc = get_approximate_location("https://ipapi.co/json/", timeout=5.0)
+    assert loc.is_available is True
+    assert loc.city == "Malappuram"
+    assert loc.region == "Kerala"
+    assert loc.latitude == 11.0341
+    assert loc.longitude == 76.0769

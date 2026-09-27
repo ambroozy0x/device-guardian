@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any, Optional
 
 from device_guardian.alerts.models import AlertEvent
-from device_guardian.camera.capture import CameraError, capture_photo
+from device_guardian.camera.capture import CameraError, capture_photo, capture_photos
 from device_guardian.config import AppConfig, ConfigurationError, load_config
 from device_guardian.location.geolocation import LocationInfo, get_approximate_location
 from device_guardian.logger import get_logger
@@ -137,31 +137,51 @@ def trigger_alert(
             timeout=config.request_timeout_seconds,
         )
 
-    # Step 3: Capture webcam photograph
+    # Step 3: Capture webcam photograph(s)
     captured_image_path: Optional[Path] = None
+    captured_image_paths: list[Path] = []
     camera_success = False
     if getattr(config, "camera_alert_enabled", True):
+        photo_count = max(1, getattr(config, "camera_photo_count", 3))
         try:
             captured_image_path = capture_photo(
                 camera_index=config.camera_index,
                 output_dir=output_dir,
             )
+            captured_image_paths = [captured_image_path] if captured_image_path else []
             camera_success = True
-            logger.info("Webcam photo captured at: %s", captured_image_path)
+            logger.info("Primary webcam photo captured at: %s", captured_image_path)
+
+            if photo_count > 1 and captured_image_path:
+                try:
+                    extra_photos = capture_photos(
+                        camera_index=config.camera_index,
+                        count=photo_count - 1,
+                        output_dir=output_dir,
+                    )
+                    captured_image_paths.extend(extra_photos)
+                    logger.info("Captured %d additional burst photo(s).", len(extra_photos))
+                except Exception as burst_exc:
+                    logger.debug("Additional burst capture skipped: %s", burst_exc)
+
         except CameraError as exc:
             logger.warning("Camera capture unavailable: %s", exc)
             captured_image_path = None
+            captured_image_paths = []
             camera_success = False
     else:
         logger.info("Camera capture skipped (CAMERA_ALERT_ENABLED=False).")
 
-    # Step 4: Obtain approximate geolocation
+    # Step 4: Obtain approximate or exact geolocation
     location_info: LocationInfo
     if getattr(config, "location_alert_enabled", True):
         try:
             location_info = get_approximate_location(
                 api_url=config.location_api_url,
                 timeout=config.request_timeout_seconds,
+                exact_latitude=getattr(config, "exact_latitude", None),
+                exact_longitude=getattr(config, "exact_longitude", None),
+                exact_location_name=getattr(config, "exact_location_name", ""),
             )
             location_success = location_info.is_available
         except Exception as exc:
@@ -178,6 +198,7 @@ def trigger_alert(
         reason=reason,
         timestamp=timestamp,
         image_path=captured_image_path,
+        image_paths=captured_image_paths,
         location=location_info,
     )
     formatted_message = event.format_telegram_message()
@@ -202,7 +223,18 @@ def trigger_alert(
 
         if photo_resp.success:
             telegram_success = True
-            logger.info("Telegram alert with photograph delivered successfully.")
+            logger.info("Telegram alert with primary photograph delivered successfully.")
+            # Dispatch any additional burst photos
+            for idx, extra_path in enumerate(captured_image_paths[1:], start=2):
+                try:
+                    if extra_path and extra_path.is_file():
+                        burst_caption = f"📷 Snapshot {idx}/{len(captured_image_paths)} (Intrusion Burst Capture)"
+                        telegram_client.send_photo(
+                            photo_path=extra_path,
+                            caption=burst_caption,
+                        )
+                except Exception as extra_err:
+                    logger.debug("Extra burst photo delivery skipped: %s", extra_err)
         else:
             logger.warning(
                 "Photo delivery failed (%s). Attempting fallback text message...",
@@ -233,8 +265,9 @@ def trigger_alert(
             error_message = msg_resp.error_message
 
     # Step 7: Clean up temporary resources
-    if telegram_success and cleanup_image_on_success and captured_image_path:
-        _cleanup_temporary_image(captured_image_path)
+    if telegram_success and cleanup_image_on_success and captured_image_paths:
+        for img_path in captured_image_paths:
+            _cleanup_temporary_image(img_path)
     elif not telegram_success and captured_image_path:
         logger.info(
             "Retaining temporary capture for diagnostic inspection at: %s",

@@ -95,6 +95,10 @@ class AppConfig:
     camera_alert_enabled: bool = True
     location_alert_enabled: bool = True
     telegram_alert_enabled: bool = True
+    camera_photo_count: int = 3
+    exact_latitude: Optional[float] = None
+    exact_longitude: Optional[float] = None
+    exact_location_name: str = ""
     # Phase 5: Packaging, Background Services & System Tray Integration
     background_mode_enabled: bool = False
     tray_enabled: bool = True
@@ -168,6 +172,10 @@ class AppConfig:
             "camera_alert_enabled": self.camera_alert_enabled,
             "location_alert_enabled": self.location_alert_enabled,
             "telegram_alert_enabled": self.telegram_alert_enabled,
+            "camera_photo_count": self.camera_photo_count,
+            "exact_latitude": self.exact_latitude,
+            "exact_longitude": self.exact_longitude,
+            "exact_location_name": self.exact_location_name,
             "background_mode_enabled": self.background_mode_enabled,
             "tray_enabled": self.tray_enabled,
             "start_with_system": self.start_with_system,
@@ -256,6 +264,26 @@ class AppConfig:
         elif self.camera_index > 32:
             errors.append(
                 f"CAMERA_INDEX exceeds maximum allowed index (32), got: {self.camera_index}"
+            )
+
+        # Validate Camera Photo Count (Burst Mode)
+        if self.camera_photo_count < 1:
+            errors.append(
+                f"CAMERA_PHOTO_COUNT must be at least 1, got: {self.camera_photo_count}"
+            )
+        elif self.camera_photo_count > 10:
+            errors.append(
+                f"CAMERA_PHOTO_COUNT exceeds maximum allowed (10), got: {self.camera_photo_count}"
+            )
+
+        # Validate Exact Coordinates (if configured)
+        if self.exact_latitude is not None and not (-90.0 <= self.exact_latitude <= 90.0):
+            errors.append(
+                f"EXACT_LATITUDE must be between -90.0 and 90.0, got: {self.exact_latitude}"
+            )
+        if self.exact_longitude is not None and not (-180.0 <= self.exact_longitude <= 180.0):
+            errors.append(
+                f"EXACT_LONGITUDE must be between -180.0 and 180.0, got: {self.exact_longitude}"
             )
 
         # Validate Timeout
@@ -412,6 +440,38 @@ def load_config(env_path: Optional[Path | str] = None) -> AppConfig:
         raise ConfigurationError(
             f"Invalid CAMERA_INDEX: '{raw_camera_index}'. Must be an integer."
         )
+
+    # Parse camera photo count (burst mode, default: 3)
+    raw_photo_count = os.getenv("CAMERA_PHOTO_COUNT") or os.getenv("BURST_PHOTO_COUNT", "3")
+    try:
+        camera_photo_count = int(raw_photo_count)
+    except ValueError:
+        raise ConfigurationError(
+            f"Invalid CAMERA_PHOTO_COUNT: '{raw_photo_count}'. Must be an integer."
+        )
+
+    # Parse exact location coordinates (optional)
+    raw_exact_lat = os.getenv("EXACT_LATITUDE", "").strip()
+    exact_latitude = None
+    if raw_exact_lat:
+        try:
+            exact_latitude = float(raw_exact_lat)
+        except ValueError:
+            raise ConfigurationError(
+                f"Invalid EXACT_LATITUDE: '{raw_exact_lat}'. Must be a valid float."
+            )
+
+    raw_exact_lon = os.getenv("EXACT_LONGITUDE", "").strip()
+    exact_longitude = None
+    if raw_exact_lon:
+        try:
+            exact_longitude = float(raw_exact_lon)
+        except ValueError:
+            raise ConfigurationError(
+                f"Invalid EXACT_LONGITUDE: '{raw_exact_lon}'. Must be a valid float."
+            )
+
+    exact_location_name = os.getenv("EXACT_LOCATION_NAME", "").strip()
 
     # Parse request timeout
     raw_timeout = os.getenv("REQUEST_TIMEOUT_SECONDS", "10")
@@ -577,6 +637,10 @@ def load_config(env_path: Optional[Path | str] = None) -> AppConfig:
         camera_alert_enabled=camera_alert_enabled,
         location_alert_enabled=location_alert_enabled,
         telegram_alert_enabled=telegram_alert_enabled,
+        camera_photo_count=camera_photo_count,
+        exact_latitude=exact_latitude,
+        exact_longitude=exact_longitude,
+        exact_location_name=exact_location_name,
         background_mode_enabled=background_mode_enabled,
         tray_enabled=tray_enabled,
         start_with_system=start_with_system,

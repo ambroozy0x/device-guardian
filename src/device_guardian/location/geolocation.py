@@ -110,8 +110,11 @@ def _parse_location_payload(data: dict[str, Any]) -> LocationInfo:
 def get_approximate_location(
     api_url: str = DEFAULT_LOCATION_API,
     timeout: float = 10.0,
+    exact_latitude: Optional[float] = None,
+    exact_longitude: Optional[float] = None,
+    exact_location_name: Optional[str] = None,
 ) -> LocationInfo:
-    """Retrieve approximate IP-based location via an HTTP REST endpoint.
+    """Retrieve approximate IP-based location via an HTTP REST endpoint or exact GPS.
 
     Fails gracefully without raising exceptions; on any error, returns
     a LocationInfo instance marked as unavailable.
@@ -119,10 +122,33 @@ def get_approximate_location(
     Args:
         api_url: The IP geolocation API endpoint.
         timeout: Request timeout in seconds.
+        exact_latitude: Optional user-configured exact latitude coordinate.
+        exact_longitude: Optional user-configured exact longitude coordinate.
+        exact_location_name: Optional user-configured place name.
 
     Returns:
-        LocationInfo containing approximate coordinates or fallback 'Unavailable' data.
+        LocationInfo containing exact or approximate coordinates or fallback 'Unavailable' data.
     """
+    # Exact coordinates override
+    if exact_latitude is not None and exact_longitude is not None:
+        name = str(exact_location_name or "").strip() or "Configured GPS Location"
+        logger.info(
+            "Using configured exact GPS location: %s (Lat: %.6f, Lon: %.6f)",
+            name,
+            exact_latitude,
+            exact_longitude,
+        )
+        return LocationInfo(
+            ip="Configured",
+            city=name,
+            region="Exact GPS",
+            country="Configured",
+            latitude=float(exact_latitude),
+            longitude=float(exact_longitude),
+            is_available=True,
+            raw_data={"exact": True, "place": name, "lat": exact_latitude, "lon": exact_longitude},
+        )
+
     # Phase 15 Hardening: Validate URL scheme and bound timeout
     clean_url = str(api_url or "").strip()
     if not clean_url or not clean_url.lower().startswith(("http://", "https://")):
@@ -150,6 +176,14 @@ def get_approximate_location(
             logger.warning(
                 "Location lookup returned non-200 status code: %d", response.status_code
             )
+            # Automatic fallback to ip-api.com if primary was ipapi.co
+            if "ipapi.co" in clean_url:
+                try:
+                    fb_resp = requests.get("http://ip-api.com/json/", timeout=bounded_timeout)
+                    if fb_resp.status_code == 200:
+                        return _parse_location_payload(fb_resp.json())
+                except Exception:
+                    pass
             return LocationInfo()
 
         data = response.json()

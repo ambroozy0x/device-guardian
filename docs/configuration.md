@@ -40,6 +40,10 @@ All configuration settings are strictly parsed and bounded at startup. Invalid v
 | `AUTO_RESTART_ENABLED` | `bool` | No | `true` | Strict boolean | Automatically restarts crashed worker threads up to `MAX_RESTART_ATTEMPTS`. |
 | `MAX_RESTART_ATTEMPTS` | `int` | No | `3` | `0` to `100` | Maximum automatic recovery restarts allowed before the daemon enters fatal failure state. |
 | `RESTART_BACKOFF_SECONDS` | `float` | No | `2.0` | `0.0` to `3600.0` | Exponential backoff delay between worker restart attempts. |
+| `CAMERA_PHOTO_COUNT` | `int` | No | `3` | `1` to `10` | Number of rapid burst photos captured per security alert. |
+| `EXACT_LATITUDE` | `float` | No | `None` | `-90.0` to `90.0` | Exact fixed GPS latitude coordinate for home/office (overrides IP lookup). |
+| `EXACT_LONGITUDE` | `float` | No | `None` | `-180.0` to `180.0` | Exact fixed GPS longitude coordinate for home/office (overrides IP lookup). |
+| `EXACT_LOCATION_NAME` | `str` | No | `""` | Any non-empty string | Human-readable place name corresponding to exact GPS coordinates (e.g. "Cherur, Malappuram"). |
 
 ---
 

@@ -1336,16 +1336,21 @@ Phase 17 represents the final planned engineering phase and authoritative releas
 - **Dynamic Headers**: User-Agent headers, lifecycle records, and installation models dynamically derive version from `__version__`.
 
 ### 2. Standalone Windows Release Artifacts (`dist/`)
-- **Executable**: `dist/device-guardian.exe` (69.84 MB, 73,232,325 bytes)
-  - **SHA-256 Digest**: `2a6fa0617dd235c510b2eff8a61dfa7423c27d1c5971faa9d83adac39731e89e`
+- **Executable**: `dist/device-guardian.exe` (69.85 MB, 73,238,031 bytes)
+  - **SHA-256 Digest**: `e660963a8bbe709d3a76e859b8af01c1fa638812d9fe0f91d5d308531c0ffd90`
 - **Release Manifest**: `dist/release-manifest.json`
 - **Reproducible Build Metadata**: `dist/build-metadata.json`
 - **Installation Verification**: Executable validated via `.\dist\device-guardian.exe --verify-installation` (Hash matching: `PASS`, Structure: `VALID`).
 
-### 3. Final Release Certification Matrix
+### 3. Multi-Photo Burst & Exact Pinpoint Location
+- **3-Photo Burst Mode**: Security alerts capture a rapid sequence of 3 photos (`capture_YYYY-MM-DD_HHMMSS_1.jpg`, `_2.jpg`, `_3.jpg`) with 0.35s intervals, delivering full intrusion context to Telegram. Configurable via `--burst <count>` or `CAMERA_PHOTO_COUNT=3`.
+- **Exact GPS Pinpoint**: Users can configure their exact home/office GPS coordinates via `--set-location <lat> <lon> [place_name]` or `.env` (`EXACT_LATITUDE`, `EXACT_LONGITUDE`, `EXACT_LOCATION_NAME`) to override approximate IP lookups with exact pin accuracy.
+- **Resilient Geolocation Fallback**: Geolocation queries seamlessly fallback from `ipapi.co` to `ip-api.com` in case of ISP rate limits or carrier-grade NAT issues.
+
+### 4. Final Release Certification Matrix
 
 | Area | Status | Evidence |
-| :--- | :---: | :--- |
+| :--- | :--- | :--- |
 | **Version Metadata** | `CERTIFIED` | Unified `1.0.0` in `version.py`, `pyproject.toml`, and runtime models |
 | **Authentication & RBAC** | `CERTIFIED` | Zero password collection; explicit `--yes` confirmation required for destructive actions |
 | **Secret Protection** | `CERTIFIED` | DPAPI encryption active; centralized `SecretRedactor` active; full repo scan CLEAN |
@@ -1362,7 +1367,7 @@ Phase 17 represents the final planned engineering phase and authoritative releas
 | **24-Hour Production Soak** | `FRAMEWORK VERIFIED / 24H SOAK NOT RUN` | Framework verified, smoke/short soak verified; 24h soak must be executed on target hardware |
 | **Windows Authenticode** | `NOT VERIFIED / NOT IMPLEMENTED` | Ed25519 and SHA-256 verified; Authenticode requires commercial EV physical CA cryptotoken |
 
-### 4. Release Certification Verdict
+### 5. Release Certification Verdict
 
 > **CERTIFIED FOR CONTROLLED V1.0.0 RELEASE**
 >

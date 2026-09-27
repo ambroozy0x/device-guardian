@@ -120,3 +120,37 @@ def test_load_config_from_explicit_env_file(tmp_path: Path):
     assert config.camera_index == 1
     assert config.request_timeout_seconds == 15.5
     assert config.location_api_url == "https://example.com/geo"
+
+
+def test_config_burst_photo_count_and_exact_coordinates(tmp_path: Path):
+    """Verify loading and validating burst photo count and exact GPS coordinates."""
+    env_file = tmp_path / ".env"
+    env_file.write_text(
+        "TELEGRAM_BOT_TOKEN=test_token_123456789\n"
+        "TELEGRAM_CHAT_ID=987654321\n"
+        "CAMERA_PHOTO_COUNT=3\n"
+        "EXACT_LATITUDE=11.074027\n"
+        "EXACT_LONGITUDE=75.982030\n"
+        "EXACT_LOCATION_NAME=Cherur, Malappuram\n"
+    )
+
+    config = load_config(env_path=env_file)
+    assert config.camera_photo_count == 3
+    assert config.exact_latitude == 11.074027
+    assert config.exact_longitude == 75.982030
+    assert config.exact_location_name == "Cherur, Malappuram"
+    config.validate()
+
+    # Verify invalid burst bounds
+    config.camera_photo_count = 0
+    with pytest.raises(ConfigurationError):
+        config.validate()
+
+    config.camera_photo_count = 15
+    with pytest.raises(ConfigurationError):
+        config.validate()
+
+    config.camera_photo_count = 3
+    config.exact_latitude = 95.0
+    with pytest.raises(ConfigurationError):
+        config.validate()
