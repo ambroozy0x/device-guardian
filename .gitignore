@@ -25,6 +25,8 @@ build/
 dist/
 *.egg-info/
 *.spec
+*.apk
+.gradle/
 
 # Logs
 *.log
