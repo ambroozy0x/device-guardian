@@ -26,6 +26,30 @@ Device Guardian is built in progressive, disciplined phases:
 - **Phase 13: Cross-Platform Parity, Platform Hardening & Release Packaging**: Platform compatibility and environment resilience across Windows, Linux, and macOS. Resilient sensor degradation, conditional notification initialization, stale lock cleanup, native OS path compatibility, and verified release packaging.
 - **Phase 14: Performance, 24-Hour Soak & Reliability Engineering**: Production-grade reliability engineering, leak defense, and 24-hour soak validation. In-memory operational reliability metrics model (`ReliabilityMetricsTracker`), bounded alert queue with backpressure and priority preservation (`BoundedAlertQueue`), network circuit breaker pattern (`CircuitBreaker`) with bounded retries, log storm suppression via rate-limited duplicate filtering (`DuplicateLogFilter`), deterministic resource lifecycle cleanup, and dedicated soak testing framework (`src/device_guardian/reliability/soak.py`) evaluating explicit reliability acceptance criteria (RSS growth, thread leakage, unexpected errors, retry limits, queue bounds).
 - **Phase 15: Final Security Audit & Release Certification**: Comprehensive security audit, adversarial vulnerability remediation, cryptographic integrity validation, and formal release readiness certification. Hardened duplicate log suppression preserving critical security audit trails, percent-encoded path traversal rejection (`%2e%2e`, `%00`), alert payload dynamic string redaction, URL scheme and timeout bounding for geolocation services, credential scrubbing from platform auth logs (macOS/Linux), modularized boolean and CSV configuration parsers, and 12 dedicated adversarial test suites covering authentication, RBAC, input validation, filesystem defense, secrets isolation, cryptography, network boundaries, IPC replay resistance, update integrity, log sanitization, configuration boundaries, and persistent storage.
+- **Phase 16: Production Documentation & Operator Handbook**: Complete, operator-ready documentation system grounded in the verified codebase. 18 dedicated guides in `docs/` covering installation, configuration, operational procedures, security architecture, detection adapters, alert delivery, reliability engineering, troubleshooting, backup/recovery, update workflows, platform support, deployment checklists, and transparent disclosures on soak and code signing status.
+
+### Operator Documentation Index (`docs/`)
+
+| Document | Description |
+| :--- | :--- |
+| [**Documentation Hub**](docs/README.md) | Central index, navigation matrix, and persona reading paths |
+| [**Quick Start Guide**](docs/quick-start.md) | 5-minute fast-path installation and first alert verification |
+| [**Installation Guide**](docs/installation.md) | Source vs binary setup, dependencies, and OS directory isolation |
+| [**Configuration Reference**](docs/configuration.md) | Exhaustive parameter reference, validation bounds, and strict boolean rules |
+| [**Operator Handbook**](docs/operator-handbook.md) | Central operations manual: CLI commands, glyphs, maintenance, and triage |
+| [**Security Guide**](docs/security-guide.md) | Security architecture, threat model, DPAPI vault, and safe path validation |
+| [**Detection Guide**](docs/detection-guide.md) | OS log adapters, normalization, sliding window, and smart filter hierarchy |
+| [**Alerts & Notifications**](docs/alerts-and-notifications.md) | Bounded queue, circuit breaker, Telegram dispatch, and sensor fallbacks |
+| [**Reliability & Soak**](docs/reliability-and-soak.md) | Leak prevention, metrics tracker, soak runner CLI, and soak disclosures |
+| [**Troubleshooting Guide**](docs/troubleshooting.md) | Symptom-based triage, root cause analysis, and verified operator fixes |
+| [**Recovery & Backup**](docs/recovery-and-backup.md) | Atomic persistence, state repair (`--repair-state`), and backup scripts |
+| [**Updates & Releases**](docs/updates-and-release.md) | Update lifecycle, Ed25519 signatures, transactions, and rollback |
+| [**Deployment Checklist**](docs/deployment-checklist.md) | 6-phase deployment readiness, verification, and hardening checklist |
+| [**Incident Response**](docs/incident-response.md) | 7-step IR playbook and scenario procedures for brute-force and token exposure |
+| [**Platform Support**](docs/platform-support.md) | Tier 1 (Windows) vs Tier 2 (Linux/macOS) capability and adapter matrix |
+| [**Architecture Specification**](docs/architecture.md) | End-to-end component flow, subsystem details, and privilege boundaries |
+| [**Frequently Asked Questions**](docs/faq.md) | Practical Q&A answering common operator and architectural questions |
+| [**Known Limitations**](docs/known-limitations.md) | Transparent disclosures: 24h soak status, Authenticode, and camera exclusivity |
 
 
 ```text
@@ -1258,3 +1282,42 @@ Phase 15 represents the comprehensive pre-release security verification, adversa
 - **Windows Authenticode Code Signing**: **NOT VERIFIED** (Requires commercial EV certificate and hardware cryptographic token)
 - **24-Hour Production Soak**: **FRAMEWORK VERIFIED / 24H SOAK NOT RUN**
 - **Overall Verdict**: **CERTIFIED FOR CONTROLLED V1 RELEASE**
+
+---
+
+## 16. Phase 16 - Production Documentation & Operator Handbook
+
+Phase 16 transforms the completed engineering, reliability, and security foundations of Device Guardian (Phases 1–15) into an authoritative, operator-ready documentation system.
+
+### 1. Grounded Documentation Philosophy
+All documentation strictly reflects the verified codebase:
+- **Zero Hallucination Invariant**: All documented CLI commands, flags, configuration variables, and file paths map directly to active Python classes and functions.
+- **Explicit Verification Boundaries**: Every document clearly distinguishes between host-tested features and theoretical or environment-constrained features.
+- **Zero Secret Exposure**: All documentation examples use sanitized tokens, dummy credentials, and local RFC-5737 IP ranges.
+
+### 2. Complete Operator Documentation Suite (`docs/`)
+
+The documentation suite in `docs/` provides 18 dedicated guides organized by operator lifecycle:
+
+1. [**docs/README.md**](docs/README.md) — Documentation index, persona navigation (Operators, Auditors, Developers), and reading paths.
+2. [**docs/quick-start.md**](docs/quick-start.md) — 5-minute fast-path installation, interactive setup, and first test alert verification.
+3. [**docs/installation.md**](docs/installation.md) — Source vs binary installation, Python 3.11+ requirements, dependency table, and directory separation.
+4. [**docs/configuration.md**](docs/configuration.md) — Complete 30-setting configuration table, strict boolean rules, validation bounds, and sanitized `.env` template.
+5. [**docs/operator-handbook.md**](docs/operator-handbook.md) — 22-section operational handbook: CLI commands, glyphs, exit codes, maintenance mode, and emergency actions.
+6. [**docs/security-guide.md**](docs/security-guide.md) — Threat model, DPAPI / encrypted store vault, secret redactor, safe path traversal, IPC whitelisting, and Authenticode disclosure.
+7. [**docs/detection-guide.md**](docs/detection-guide.md) — OS event adapters, normalization, sliding window, and smart filter priority hierarchy (Priorities 10–70).
+8. [**docs/alerts-and-notifications.md**](docs/alerts-and-notifications.md) — Alert lifecycle, bounded queue (`BoundedAlertQueue`), circuit breaker, Telegram dispatch, and sensor fallbacks.
+9. [**docs/reliability-and-soak.md**](docs/reliability-and-soak.md) — Leak prevention, real-time metrics engine, soak runner CLI, acceptance criteria, and explicit 24h soak disclosure.
+10. [**docs/troubleshooting.md**](docs/troubleshooting.md) — Symptom-based triage, root causes, and verified fixes for startup, locks, sensors, and Telegram errors.
+11. [**docs/recovery-and-backup.md**](docs/recovery-and-backup.md) — Atomic persistence, corrupted state repair (`--repair-state`), installation verification, and manual backup scripts.
+12. [**docs/updates-and-release.md**](docs/updates-and-release.md) — Update lifecycle, Ed25519 signatures, streaming SHA-256 chunking, transactions, and rollback.
+13. [**docs/deployment-checklist.md**](docs/deployment-checklist.md) — 6-phase deployment readiness, verification, and hardening checklist.
+14. [**docs/incident-response.md**](docs/incident-response.md) — 7-step IR playbook and threat scenarios (brute force, token compromise, alert storms).
+15. [**docs/platform-support.md**](docs/platform-support.md) — Realistic cross-platform matrix for Windows (Tier 1), Linux (Tier 2), and macOS (Tier 2).
+16. [**docs/architecture.md**](docs/architecture.md) — End-to-end component flow, subsystem details, directory layout, and privilege boundaries.
+17. [**docs/faq.md**](docs/faq.md) — Grounded Q&A answering 11 common operator and architectural questions.
+18. [**docs/known-limitations.md**](docs/known-limitations.md) — Transparent disclosures on 24h soak status, Authenticode signing, camera exclusivity, and permissions.
+
+### 3. Automated Documentation Testing
+- Verified via `tests/test_phase16_documentation.py`.
+- Automated test checks confirm file existence, non-emptiness, relative cross-link integrity, required operational disclosures (24-hour soak status, Windows Authenticode), and complete absence of exposed credentials.

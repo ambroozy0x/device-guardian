@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.1.0] — 2026-09-27
 
+### Phase 16 — Production Documentation & Operator Handbook
+#### Added
+- **Production Documentation System (`docs/`)**: Authored 18 operator-ready documentation guides grounded in the verified codebase:
+  - `docs/README.md`: Central documentation hub, navigation matrix, and persona paths.
+  - `docs/quick-start.md`: Fast-path setup for Windows PowerShell and Linux/macOS Bash.
+  - `docs/installation.md`: System requirements, dependencies, and clean directory isolation (`INSTALL_ROOT` vs `USER_DATA`).
+  - `docs/configuration.md`: Complete table of all 30 configuration parameters, validation bounds, strict boolean rules, and sanitized `.env` example.
+  - `docs/operator-handbook.md`: Comprehensive 22-section operational handbook covering CLI commands, exit codes, health glyphs, maintenance mode, and emergency actions.
+  - `docs/security-guide.md`: Threat model, DPAPI / encrypted store credentials, secret redactor, safe path traversal, IPC whitelisting, and Authenticode disclosure.
+  - `docs/detection-guide.md`: Detection adapters, event normalization, sliding-window thresholding, and smart filter hierarchy.
+  - `docs/alerts-and-notifications.md`: Alert lifecycle, bounded queue (`BoundedAlertQueue`), circuit breaker (`CircuitBreaker`), Telegram delivery, and sensor fallbacks.
+  - `docs/reliability-and-soak.md`: Leak prevention, real-time metrics engine, soak runner CLI, acceptance criteria, and explicit 24h soak disclosure.
+  - `docs/troubleshooting.md`: Symptom-based troubleshooting for startup, PID locks, cameras, geolocation, Telegram errors, and log ingestion.
+  - `docs/recovery-and-backup.md`: Atomic persistence, corrupted state repair (`--repair-state`), installation verification, and manual backup scripts.
+  - `docs/updates-and-release.md`: Update lifecycle, Ed25519 signature verification, streaming SHA-256 chunking, update transactions, and rollback.
+  - `docs/deployment-checklist.md`: 6-phase deployment and verification checklist for production readiness.
+  - `docs/incident-response.md`: 7-step incident response playbook (Detect, Contain, Preserve, Recover, Verify, Document, Escalate) and threat scenarios.
+  - `docs/platform-support.md`: Realistic cross-platform matrix for Windows, Linux, and macOS with explicit support tiers.
+  - `docs/architecture.md`: Component diagram, subsystem interactions, directory boundaries, and privilege separation.
+  - `docs/faq.md`: Grounded Q&A answering 11 operator and security questions accurately based on implementation.
+  - `docs/known-limitations.md`: Transparent disclosures on 24h soak status, Authenticode, camera exclusivity, and OS log permissions.
+- **Automated Documentation Test Suite**: Added `tests/test_phase16_documentation.py` asserting file presence, non-emptiness, cross-link validity, required operational caveats (24h soak status, Authenticode), and zero secret leaks.
+
 ### Phase 15 — Final Security Audit & Release Certification
 #### Added
 - **Adversarial Security Regression Test Suite**: 55 automated adversarial regression tests (`tests/test_phase15_security_*.py`) covering Authentication sanitization, RBAC operator contracts, Input injection/boundary defense, Filesystem traversal defenses, Secrets storage & recovery isolation, Cryptographic Ed25519/SHA-256 integrity, Network perimeter isolation, IPC replay defense & clock skew, Update package validation, Audit log sanitization & retention, Configuration parsing boundaries, and Atomic persistence safety.
