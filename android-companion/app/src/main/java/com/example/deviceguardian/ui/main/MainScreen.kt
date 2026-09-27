@@ -192,14 +192,13 @@ fun MainScreen(modifier: Modifier = Modifier) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text("🔑 Required Permissions", fontWeight = FontWeight.Bold, fontSize = 15.sp)
-                        Spacer(modifier = Modifier.height(6.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
                         Text(
-                            "Device Admin allows detecting incorrect screen unlock attempts. Camera and Location permissions capture intruder selfies and GPS.",
-                            fontSize = 12.sp,
+                            "💡 Important: For continuous lock-screen protection, choose 'While using the app' for Camera and 'Allow all the time' for Location in App Settings.",
+                            fontSize = 11.sp,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(10.dp))
 
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -240,6 +239,19 @@ fun MainScreen(modifier: Modifier = Modifier) {
                                     Text("Enable Admin", fontSize = 12.sp)
                                 }
                             }
+                        }
+
+                        Spacer(modifier = Modifier.height(8.dp))
+                        OutlinedButton(
+                            onClick = {
+                                val intent = Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = android.net.Uri.fromParts("package", context.packageName, null)
+                                }
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("⚙️ Open App Settings (Permissions & Battery)", fontSize = 12.sp)
                         }
                     }
                 }

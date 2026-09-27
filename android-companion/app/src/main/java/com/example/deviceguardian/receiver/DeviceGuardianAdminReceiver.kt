@@ -20,7 +20,15 @@ class DeviceGuardianAdminReceiver : DeviceAdminReceiver() {
 
         if (currentCount >= prefs.failedAttemptsThreshold) {
             Log.i(TAG, "Threshold reached! Triggering intruder alert pipeline...")
-            IntruderCaptureManager.triggerIntruderAlert(context, isTest = false)
+            try {
+                val captureIntent = Intent(context, com.example.deviceguardian.service.CaptureActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
+                }
+                context.startActivity(captureIntent)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to launch CaptureActivity, falling back to direct background alert: ${e.message}")
+                IntruderCaptureManager.triggerIntruderAlert(context, isTest = false)
+            }
         }
     }
 

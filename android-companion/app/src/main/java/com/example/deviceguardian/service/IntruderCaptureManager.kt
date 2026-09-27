@@ -35,15 +35,21 @@ object IntruderCaptureManager {
     private const val TAG = "IntruderCaptureManager"
     private var textToSpeech: TextToSpeech? = null
 
-    fun triggerIntruderAlert(context: Context, isTest: Boolean = false) {
+    fun triggerIntruderAlert(
+        context: Context,
+        isTest: Boolean = false,
+        onComplete: (() -> Unit)? = null
+    ) {
         val prefs = PreferencesManager(context)
         if (!prefs.isProtectionActive && !isTest) {
             Log.d(TAG, "Protection is not active, ignoring trigger.")
+            onComplete?.invoke()
             return
         }
 
         if (!prefs.isTelegramConfigured()) {
             Log.w(TAG, "Telegram is not configured, cannot send alert.")
+            onComplete?.invoke()
             return
         }
 
@@ -129,6 +135,10 @@ object IntruderCaptureManager {
                 Log.i(TAG, "Intruder alert dispatched successfully to Telegram.")
             } catch (e: Exception) {
                 Log.e(TAG, "Error executing intruder alert: ${e.message}", e)
+            } finally {
+                Handler(Looper.getMainLooper()).post {
+                    onComplete?.invoke()
+                }
             }
         }
     }
